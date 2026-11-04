@@ -8,11 +8,11 @@ Defines the `.petpack` container, manifest, sprite-sheet layout, validation limi
 
 ### Requirement: Pack container
 
-A custom animation pack SHALL be a ZIP archive with the `.petpack` extension containing exactly `manifest.json` and one sprite sheet named `spritesheet.png` or `spritesheet.webp`. The app SHALL reject archives that cannot be read as ZIP files, contain additional files, are larger than 5 MB compressed, or are larger than 20 MB uncompressed.
+A custom animation pack SHALL be a ZIP archive with the `.petpack` extension containing exactly `manifest.json` and one sprite sheet named `spritesheet.png`, `spritesheet.webp`, or `spritesheet.svg`. The app SHALL reject archives that cannot be read as ZIP files, contain additional files, are larger than 5 MB compressed, or are larger than 20 MB uncompressed.
 
 #### Scenario: Valid pack container
 
-- **GIVEN** a `.petpack` with `manifest.json` and `spritesheet.png`
+- **GIVEN** a `.petpack` with `manifest.json` and `spritesheet.svg`
 - **WHEN** the player selects the file
 - **THEN** the app accepts it for manifest and image validation
 
@@ -88,9 +88,9 @@ Each animation SHALL declare `frames` from 1 to 24 and MAY declare `fps` from 4 
 - **WHEN** the pack is validated
 - **THEN** the app rejects it with an FPS-limit error
 
-### Requirement: Sprite sheet layout
+### Requirement: Sprite sheet rows
 
-The sprite sheet SHALL be a static PNG or WebP image with these fixed rows:
+The sprite sheet SHALL use these fixed rows:
 
 | Row | Animation |
 | --- | --- |
@@ -101,32 +101,93 @@ The sprite sheet SHALL be a static PNG or WebP image with these fixed rows:
 | 4 | `wake` |
 | 5 | `walk` |
 
-The sheet width SHALL be at least `frameWidth × max(frames)` and at most 4096 pixels. The sheet height SHALL be at least `frameHeight × 6` and at most 4096 pixels. Frames SHALL be laid out left to right starting at column 0 of their row. Extra transparent space MAY be ignored.
+Frames SHALL be laid out left to right starting at column 0 of their row.
 
-#### Scenario: Atlas matches the manifest
+#### Scenario: Row layout is read correctly
+
+- **GIVEN** a sprite sheet with `idle` in row 0 and `walk` in row 5
+- **WHEN** the pack is validated
+- **THEN** the app reads each row as its defined animation
+
+### Requirement: Raster sprite sheet dimensions
+
+A PNG or WebP sprite sheet SHALL be at least `frameWidth × max(frames)` pixels wide and `frameHeight × 6` pixels tall, and SHALL NOT exceed 4096 pixels in either dimension. Extra transparent space MAY be ignored.
+
+#### Scenario: Raster atlas matches the manifest
 
 - **GIVEN** a 128 × 128 frame size and a maximum frame count of 8
 - **WHEN** the pack is validated
-- **THEN** the sprite sheet is accepted when it is at least 1024 pixels wide and 768 pixels tall
+- **THEN** the PNG or WebP sheet is accepted when it is at least 1024 pixels wide and 768 pixels tall
 
-#### Scenario: Atlas too small
+#### Scenario: Raster atlas too small
 
-- **GIVEN** a sprite sheet narrower than `frameWidth × max(frames)`
+- **GIVEN** a PNG or WebP sheet narrower than `frameWidth × max(frames)`
 - **WHEN** the pack is validated
 - **THEN** the app rejects it with an atlas-dimension error
 
-#### Scenario: Animated image rejected
+#### Scenario: Animated raster rejected
 
 - **GIVEN** a sprite sheet that is an animated PNG or animated WebP
 - **WHEN** the pack is validated
 - **THEN** the app rejects it because the sprite sheet must be static
 
-#### Scenario: Unsupported image format
+### Requirement: SVG sprite sheet dimensions
 
-- **GIVEN** a pack whose sprite sheet is SVG, GIF, HTML, or JavaScript renamed to `.png`
+An SVG sprite sheet SHALL be a static image whose root `viewBox` is at least `frameWidth × max(frames)` by `frameHeight × 6` user units and no larger than 4096 × 4096 user units. The app SHALL rasterize the sheet to a bitmap no larger than 4096 × 4096 before playback.
+
+#### Scenario: SVG atlas matches the manifest
+
+- **GIVEN** a 128 × 128 frame size, a maximum frame count of 8, and an SVG root viewBox of at least 1024 × 768
 - **WHEN** the pack is validated
-- **THEN** the app rejects it as an unsupported image
-- **AND** no image content is executed
+- **THEN** the SVG sheet is accepted
+- **AND** it is rasterized before playback
+
+#### Scenario: SVG atlas too small
+
+- **GIVEN** an SVG sheet whose viewBox is narrower than `frameWidth × max(frames)`
+- **WHEN** the pack is validated
+- **THEN** the app rejects it with an atlas-dimension error
+
+### Requirement: SVG isolation
+
+The app SHALL render an SVG sprite sheet as an isolated image, SHALL rasterize it before display, and SHALL NOT execute scripts or load external resources from it.
+
+#### Scenario: SVG is rasterized before display
+
+- **GIVEN** a valid SVG sprite sheet
+- **WHEN** the player previews or applies the pack
+- **THEN** the SVG is decoded as an isolated image
+- **AND** its frames are drawn from a rasterized bitmap
+
+#### Scenario: SVG script rejected
+
+- **GIVEN** an SVG sheet containing a `<script>` element
+- **WHEN** the pack is validated
+- **THEN** the app rejects it as unsafe
+- **AND** no script is executed
+
+### Requirement: SVG content restrictions
+
+The app SHALL reject SVG sprite sheets containing event-handler attributes, `<foreignObject>`, external `href` or `xlink:href` references, embedded `<image>` elements, CSS animation declarations, or SVG animation elements such as `<animate>`, `<animateTransform>`, or `<set>`.
+
+#### Scenario: SVG external reference rejected
+
+- **GIVEN** an SVG sheet that references an external image or URL
+- **WHEN** the pack is validated
+- **THEN** the app rejects it as unsafe
+- **AND** no network request is made
+
+#### Scenario: SVG animation rejected
+
+- **GIVEN** an SVG sheet containing `<animate>` or `<set>`
+- **WHEN** the pack is validated
+- **THEN** the app rejects it because the sprite sheet must be static
+
+#### Scenario: Safe vector SVG accepted
+
+- **GIVEN** an SVG sheet that uses only static vector elements, internal fragment references, and no external resources
+- **WHEN** the pack is validated
+- **THEN** the app accepts it
 
 ### Requirement: Upload and preview
 
@@ -215,6 +276,13 @@ The app SHALL render the pack name and description as plain text, SHALL reject e
 - **GIVEN** a pack is being validated and applied
 - **WHEN** the device is offline
 - **THEN** validation, preview, apply, and rendering still work
+
+#### Scenario: Unsupported image format
+
+- **GIVEN** a pack whose sprite sheet is GIF, HTML, or JavaScript renamed to `.png`
+- **WHEN** the pack is validated
+- **THEN** the app rejects it as an unsupported image
+- **AND** no image content is executed
 
 ### Requirement: Pack accessibility and reduced motion
 

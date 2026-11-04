@@ -20,9 +20,10 @@
 
 - [ ] 3.1 Add a ZIP reader and `.petpack` container validation.
 - [ ] 3.2 Validate the manifest schema, required states, frame counts, FPS, and frame dimensions.
-- [ ] 3.3 Validate sprite-sheet dimensions and reject animated or unsupported images.
+- [ ] 3.3 Validate raster and SVG sprite-sheet dimensions; reject animated raster images and unsafe SVG.
 - [ ] 3.4 Enforce compressed/uncompressed size limits and reject extra files.
 - [ ] 3.5 Add unit tests for every validation error.
+- [ ] 3.6 Add tests for SVG script, external-reference, animation-element, and `foreignObject` rejection.
 
 ## 4. Custom renderer
 
@@ -31,6 +32,7 @@
 - [ ] 4.3 Scale frames to fit the pet stage without distortion.
 - [ ] 4.4 Pause frame advancement when the document is hidden.
 - [ ] 4.5 Add accessible names and reduced-motion static frames.
+- [ ] 4.6 Rasterize SVG sheets through an isolated image and reuse the same frame crop.
 
 ## 5. Storage
 

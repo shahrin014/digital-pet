@@ -73,7 +73,7 @@ These are starting points, not requirements. The behavior specs do not depend on
 | Animation state | The pose track currently shown: `idle`, `feed`, `play`, `sleep`, `wake`, or `walk`. |
 | Transient animation | A `feed`, `play`, or `wake` animation that plays once and returns to the persistent state. |
 | Frame | One pose or image in an animation. |
-| Sprite sheet | A static image containing animation frames laid out in rows. |
+| Sprite sheet | A static PNG, WebP, or SVG image containing animation frames laid out in rows. |
 | Animation pack | A `.petpack` archive containing a manifest and sprite sheet for custom animations. |
 
 ### Design Pillars

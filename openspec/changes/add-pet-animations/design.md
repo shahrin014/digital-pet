@@ -21,6 +21,7 @@ Render custom packs with a `<canvas>` and `drawImage` using a source rectangle f
 
 - The atlas is six rows: idle, feed, play, sleep, wake, walk.
 - Row height is `frameHeight`; frame width is `frameWidth`.
+- PNG/WebP sheets are decoded directly. SVG sheets are loaded as isolated images, validated for forbidden content, and rasterized to an offscreen bitmap before cropping.
 - The player increments the frame at the manifest FPS, loops or stops at the end, and pauses when the document is hidden.
 - Scale the frame to fit the pet stage while preserving aspect ratio.
 - Under reduced motion, draw frame 0 and do not advance.
@@ -30,9 +31,10 @@ Render custom packs with a `<canvas>` and `drawImage` using a source rectangle f
 Add `fflate` as a small dependency to read the `.petpack` ZIP in memory. Validate:
 
 - ZIP signature and compressed/uncompressed size limits.
-- Exactly `manifest.json` plus `spritesheet.png` or `spritesheet.webp`.
+- Exactly `manifest.json` plus `spritesheet.png`, `spritesheet.webp`, or `spritesheet.svg`.
 - Manifest schema, required states, frame counts, FPS, frame size, and atlas dimensions.
-- Sprite sheet decodes as a static image; reject SVG, HTML, GIF, APNG, and animated WebP.
+- Sprite sheet decodes as a static PNG, WebP, or safe SVG; reject HTML, GIF, APNG, animated WebP, and unsafe SVG.
+- For SVG, reject scripts, event handlers, `foreignObject`, external `href`/`xlink:href`, embedded `<image>` elements, CSS animation declarations, and SVG animation elements.
 - Reject names/descriptions with markup; render them as text.
 
 Validation runs before anything is persisted. The preview uses the same renderer as gameplay so timing and scaling are accurate.
@@ -57,9 +59,13 @@ The MVP has one active pet. One active pack keeps the UI and storage simple and 
 
 If one animation is missing or fails at runtime, use the built-in animation for that state and keep the rest of the pack. This keeps the pet usable without silently discarding the whole appearance.
 
+### Decision: SVG source support with rasterized playback
+
+SVG sprite sheets are accepted as authoring source. The app loads them as isolated images, rejects scripts and external references, and rasterizes them to an offscreen bitmap before cropping frames. This keeps vector source art crisp without executing SVG content or depending on native SVG animation.
+
 ### Decision: No executable or animated image formats
 
-Only static PNG/WebP sprite sheets are accepted. The app controls timing from the manifest, which makes reduced motion and frame validation possible.
+Only static PNG/WebP sprite sheets and isolated static SVG sheets are accepted. The app controls timing from the manifest, which makes reduced motion and frame validation possible.
 
 ## Data Flow
 
