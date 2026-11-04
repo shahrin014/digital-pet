@@ -1,0 +1,10 @@
+schema: spec-driven
+created: 2026-11-04
+goal: Make Japanese the default language, add English as the second language, and keep Settings behind a gear button.
+affected_areas:
+  - localization
+  - pet-ui
+  - preferences
+  - game-engine
+  - notifications
+  - install
