@@ -1,0 +1,18 @@
+schema: spec-driven
+
+context: |
+  Digital Pet is a local-first PWA digital pet game. See openspec/project.md
+  for the purpose, constraints, and open decisions. Current behavior specs live
+  in openspec/specs/. Numeric balance values in the specs are provisional
+  defaults that may be tuned by updating the relevant spec.
+
+rules:
+  proposal:
+    - State what is explicitly out of scope.
+    - List any open decisions that must be resolved before delta specs are written.
+  specs:
+    - Every requirement must contain at least one testable scenario.
+    - Keep implementation details out of specs; put them in design.md.
+  tasks:
+    - Write tasks as checkboxes with hierarchical numbering.
+    - State how each task is verified.
