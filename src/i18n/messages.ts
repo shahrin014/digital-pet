@@ -435,7 +435,7 @@ export const en: Record<MessageKey, string> = {
   'animation.title': 'Pet animation',
   'animation.lede': 'Select one or more images for each activity. SVGs are used as-is; PNG, JPEG, and WebP images are traced into SVG paths in the browser before they are saved.',
   'animation.current': 'Current custom animation',
-  'animation.currentPreview': 'Current animation',
+  'animation.currentPreview': 'Current animations',
   'animation.newPreview': 'New animation preview',
   'animation.edit.title': 'Edit frames',
   'animation.edit.hint': 'Choose an activity, then select its frames. Use Copy to all activities to make a quick custom pet from one image.',
