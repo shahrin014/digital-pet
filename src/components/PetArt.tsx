@@ -1,4 +1,9 @@
 import type { Activity, Species } from '../game/types';
+import {
+  ANIMATION_LABELS,
+  persistentAnimationFor,
+  type AnimationState,
+} from '../animation/types';
 
 const ACTIVITY_LABELS: Record<Activity, string> = {
   awake: 'awake',
@@ -10,7 +15,8 @@ export interface PetArtProps {
   name: string;
   species: Species;
   activity: Activity;
-  /** Optional accessible description. Defaults to a description of name, species and activity. */
+  animation?: AnimationState;
+  /** Optional accessible description. Defaults to a description of name, species, activity and animation. */
   label?: string;
   className?: string;
 }
@@ -134,15 +140,19 @@ export function PetArt({
   name,
   species,
   activity,
+  animation,
   label,
   className,
 }: PetArtProps) {
+  const resolvedAnimation = animation ?? persistentAnimationFor(activity);
   const accessibleLabel =
-    label ?? `${name} the ${species}, ${ACTIVITY_LABELS[activity]}`;
+    label ??
+    `${name} the ${species}, ${ACTIVITY_LABELS[activity]}, ${ANIMATION_LABELS[resolvedAnimation]} animation`;
   const classes = [
     'pet-art',
     `pet-art--${species}`,
     `pet-art--${activity}`,
+    `pet-art--anim-${resolvedAnimation}`,
     className,
   ]
     .filter(Boolean)

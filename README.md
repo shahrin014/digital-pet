@@ -13,6 +13,10 @@ seconds.
   catch-up after time away.
 - A five-minute walk that continues while the app is closed or offline.
 - Optional in-app reminders, browser notifications, and quiet hours.
+- Built-in activity animations for idle, feeding, playing, sleeping, waking, and walking.
+- Custom `.petpack` animations: one static SVG per frame, with upload, validation,
+  preview, apply, replace, and remove. See
+  [`docs/animation-packs.md`](docs/animation-packs.md).
 - Separate **Reset pet** and **Delete local database** actions: reset starts a
   new pet while keeping preferences; deleting the database removes the pet,
   progress, preferences, and reminder timestamps.
@@ -37,6 +41,17 @@ Browser notifications are best-effort. Without a backend, the browser or device
 may delay or skip reminders, especially while the app is closed. In-app
 reminders still work whenever the app is open.
 
+## Custom animations
+
+Open **Settings → Pet appearance → Upload animation pack**. A `.petpack` is a
+ZIP file containing a `manifest.json` and one static SVG per frame. The app
+validates the pack, previews all six animations, and stores it locally in
+IndexedDB.
+
+See [`docs/animation-packs.md`](docs/animation-packs.md) for the layout, manifest
+schema, limits, and safety rules. A sample pack is available at
+`public/samples/example.petpack` and from the animation dialog.
+
 ## Requirements
 
 - Node.js 22 (see `.nvmrc`).
@@ -54,6 +69,7 @@ reminders still work whenever the app is open.
 | `npm run build` | Typecheck and produce a production build in `dist/`. |
 | `npm run preview` | Preview the production build locally. |
 | `npm run icons` | Regenerate the PWA icons and favicon with the pure-Node script. |
+| `npm run sample-pack` | Regenerate the sample `.petpack` in `public/samples/`. |
 
 ## Specs
 

@@ -12,10 +12,13 @@ import type { Preferences } from '../game/types';
 export interface SettingsDialogProps {
   open: boolean;
   preferences: Preferences;
+  customAnimationName?: string | null;
+  customAnimationError?: boolean;
   onClose: () => void;
   onSave: (preferences: Preferences) => void;
   onReset: () => void | Promise<void>;
   onDeleteDatabase: () => void | Promise<void>;
+  onManageAnimation: () => void;
 }
 
 const NOTIFICATION_BEST_EFFORT =
@@ -36,10 +39,13 @@ function supportsNotifications(): boolean {
 export function SettingsDialog({
   open,
   preferences,
+  customAnimationName,
+  customAnimationError = false,
   onClose,
   onSave,
   onReset,
   onDeleteDatabase,
+  onManageAnimation,
 }: SettingsDialogProps) {
   const idPrefix = useId();
   const titleId = `${idPrefix}-title`;
@@ -359,6 +365,30 @@ export function SettingsDialog({
                 />
               </label>
             </div>
+          </section>
+
+          <section className="settings-section" aria-labelledby={`${idPrefix}-appearance`}>
+            <h3 id={`${idPrefix}-appearance`}>Pet appearance</h3>
+            <p className="settings-note">
+              {customAnimationName
+                ? `Custom animation: ${customAnimationName}.`
+                : 'Your pet is using the built-in species animation.'}
+            </p>
+            {customAnimationError && (
+              <p className="settings-status" role="alert">
+                The custom animation could not be loaded. The built-in animation
+                is active.
+              </p>
+            )}
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={onManageAnimation}
+            >
+              {customAnimationName
+                ? 'Manage custom animation'
+                : 'Upload animation pack'}
+            </button>
           </section>
 
           <section className="settings-section" aria-labelledby={`${idPrefix}-data`}>

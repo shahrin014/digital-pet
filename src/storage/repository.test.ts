@@ -3,6 +3,10 @@ import { deleteDB, openDB } from 'idb';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { DEFAULT_PREFERENCES } from '../game/constants';
 import { createPet } from '../game/engine';
+import type {
+  AnimationManifest,
+  StoredAnimationPack,
+} from '../animation/types';
 import {
   createRepository,
   isPet,
@@ -13,6 +17,36 @@ import {
 let dbName: string;
 let repo: Repository;
 let counter = 0;
+
+function makeAnimationPack(): StoredAnimationPack {
+  const manifest: AnimationManifest = {
+    formatVersion: 1,
+    name: 'Mochi pack',
+    frameWidth: 128,
+    frameHeight: 128,
+    animations: {
+      idle: { frames: 1, fps: 8 },
+      feed: { frames: 1, fps: 12 },
+      play: { frames: 1, fps: 12 },
+      sleep: { frames: 1, fps: 4 },
+      wake: { frames: 1, fps: 10 },
+      walk: { frames: 1, fps: 10 },
+    },
+  };
+
+  return {
+    manifest,
+    frames: {
+      idle: [new Uint8Array([1])],
+      feed: [new Uint8Array([2])],
+      play: [new Uint8Array([3])],
+      sleep: [new Uint8Array([4])],
+      wake: [new Uint8Array([5])],
+      walk: [new Uint8Array([6])],
+    },
+    appliedAt: 1_700_000_000_000,
+  };
+}
 
 beforeEach(() => {
   dbName = `digital-pet-test-${counter++}`;
@@ -61,7 +95,7 @@ describe('repository', () => {
 
   it('reports corrupt saved data instead of throwing', async () => {
     await repo.loadPet();
-    const db = await openDB(dbName, 1);
+    const db = await openDB(dbName, 2);
     await db.put('state', { nope: true }, 'pet');
     db.close();
 
@@ -87,11 +121,31 @@ describe('repository', () => {
 
   it('falls back to default preferences when saved data is corrupt', async () => {
     await repo.loadPreferences();
-    const db = await openDB(dbName, 1);
+    const db = await openDB(dbName, 2);
     await db.put('state', { quietStart: 'not-a-time' }, 'preferences');
     db.close();
 
     await expect(repo.loadPreferences()).resolves.toEqual(DEFAULT_PREFERENCES);
+  });
+
+  it('saves, loads, and deletes an animation pack', async () => {
+    const pack = makeAnimationPack();
+
+    await repo.saveAnimationPack('pet-1', pack);
+
+    await expect(repo.loadAnimationPack('pet-1')).resolves.toEqual(pack);
+
+    await repo.deleteAnimationPack('pet-1');
+
+    await expect(repo.loadAnimationPack('pet-1')).resolves.toBeNull();
+  });
+
+  it('clears animation packs with clearAll', async () => {
+    await repo.saveAnimationPack('pet-1', makeAnimationPack());
+
+    await repo.clearAll();
+
+    await expect(repo.loadAnimationPack('pet-1')).resolves.toBeNull();
   });
 
   it('clears all saved data', async () => {
@@ -113,11 +167,13 @@ describe('repository', () => {
       ...DEFAULT_PREFERENCES,
       quietHoursEnabled: false,
     });
+    await repo.saveAnimationPack('pet-1', makeAnimationPack());
 
     await repo.deleteDatabase();
 
     await expect(repo.loadPet()).resolves.toEqual({ status: 'empty' });
     await expect(repo.loadPreferences()).resolves.toEqual(DEFAULT_PREFERENCES);
+    await expect(repo.loadAnimationPack('pet-1')).resolves.toBeNull();
   });
 });
 

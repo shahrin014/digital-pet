@@ -67,7 +67,7 @@ The manifest SHALL be valid JSON with `formatVersion` equal to `1`, a `name` of 
 
 ### Requirement: Frame and FPS limits
 
-Each animation SHALL declare `frames` from 1 to 24 and MAY declare `fps` from 4 to 30. When `fps` is omitted, the app SHALL use the animation's default: `idle` 8, `feed` 12, `play` 12, `sleep` 4, `wake` 10, and `walk` 10.
+Each animation SHALL declare `frames` from 1 to 24 and MAY declare `fps` as an integer from 4 to 30. When `fps` is omitted, the app SHALL use the animation's default: `idle` 8, `feed` 12, `play` 12, `sleep` 4, `wake` 10, and `walk` 10.
 
 #### Scenario: Default FPS applied
 

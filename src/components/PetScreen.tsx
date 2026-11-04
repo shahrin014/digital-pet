@@ -6,7 +6,13 @@ import {
   walkProgress,
 } from '../game/engine';
 import type { ActionType, Activity, Mood, NeedKey, Pet } from '../game/types';
+import {
+  ANIMATION_LABELS,
+  type AnimationState,
+  type RenderedAnimationPack,
+} from '../animation/types';
 import { ActionBar } from './ActionBar';
+import { CustomPetRenderer } from './CustomPetRenderer';
 import { NeedMeter } from './NeedMeter';
 import { PetArt } from './PetArt';
 
@@ -31,6 +37,9 @@ const NEEDS: ReadonlyArray<{ key: NeedKey; label: string }> = [
 
 export interface PetScreenProps {
   pet: Pet;
+  animationState: AnimationState;
+  renderedAnimationPack: RenderedAnimationPack | null;
+  reducedMotion: boolean;
   onAction: (action: ActionType) => void | Promise<void>;
   onOpenSettings: () => void;
   highlightAction?: ActionType | null;
@@ -38,6 +47,9 @@ export interface PetScreenProps {
 
 export function PetScreen({
   pet,
+  animationState,
+  renderedAnimationPack,
+  reducedMotion,
   onAction,
   onOpenSettings,
   highlightAction = null,
@@ -93,11 +105,23 @@ export function PetScreen({
 
       <section className="pet-card" aria-label={`${pet.name}'s status`}>
         <div className="pet-stage">
-          <PetArt
-            name={pet.name}
-            species={pet.species}
-            activity={pet.activity}
-          />
+          {renderedAnimationPack ? (
+            <CustomPetRenderer
+              frames={renderedAnimationPack.frames[animationState]}
+              manifest={renderedAnimationPack.manifest}
+              animation={animationState}
+              reducedMotion={reducedMotion}
+              label={`${pet.name} the ${pet.species}, ${ACTIVITY_LABELS[pet.activity]}, ${ANIMATION_LABELS[animationState]} animation`}
+              className="pet-stage__custom"
+            />
+          ) : (
+            <PetArt
+              name={pet.name}
+              species={pet.species}
+              activity={pet.activity}
+              animation={animationState}
+            />
+          )}
         </div>
 
         <div className="pet-card__status">

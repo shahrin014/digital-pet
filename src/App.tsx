@@ -1,7 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AdoptionScreen } from './components/AdoptionScreen';
+import { AnimationPackDialog } from './components/AnimationPackDialog';
 import { PetScreen } from './components/PetScreen';
 import { SettingsDialog } from './components/SettingsDialog';
+import { renderAnimationPack } from './animation/render';
+import {
+  persistentAnimationFor,
+  timingForState,
+  type AnimationState,
+  type ParsedAnimationPack,
+  type RenderedAnimationPack,
+  type StoredAnimationPack,
+  type TransientAnimationState,
+} from './animation/types';
+import { usePrefersReducedMotion } from './animation/usePrefersReducedMotion';
 import {
   DEFAULT_PREFERENCES,
   REMINDER_INTERVAL_MS,
@@ -167,7 +179,16 @@ export default function App() {
   const [highlightAction, setHighlightAction] = useState<ActionType | null>(
     null,
   );
+  const [transientAnimation, setTransientAnimation] =
+    useState<AnimationState | null>(null);
+  const [storedAnimationPack, setStoredAnimationPack] =
+    useState<StoredAnimationPack | null>(null);
+  const [renderedAnimationPack, setRenderedAnimationPack] =
+    useState<RenderedAnimationPack | null>(null);
+  const [animationPackError, setAnimationPackError] = useState(false);
+  const [animationDialogOpen, setAnimationDialogOpen] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+  const reducedMotion = usePrefersReducedMotion();
 
   const mountedRef = useRef(true);
   const petRef = useRef<Pet | null>(null);
@@ -179,6 +200,8 @@ export default function App() {
   const remindersRef = useRef<Record<NeedKey, number>>(emptyReminderTimes());
   const toastIdRef = useRef(0);
   const resettingRef = useRef(false);
+  const transientTimerRef = useRef<number | null>(null);
+  const renderedPackRef = useRef<RenderedAnimationPack | null>(null);
 
   const nextToastId = useCallback(() => {
     toastIdRef.current += 1;
@@ -196,6 +219,30 @@ export default function App() {
     petRef.current = next;
     setPet(next);
   }, []);
+
+  const clearTransient = useCallback(() => {
+    setTransientAnimation(null);
+    if (transientTimerRef.current !== null) {
+      window.clearTimeout(transientTimerRef.current);
+      transientTimerRef.current = null;
+    }
+  }, []);
+
+  const triggerTransient = useCallback(
+    (animation: TransientAnimationState) => {
+      clearTransient();
+      setTransientAnimation(animation);
+      const duration = timingForState(
+        animation,
+        renderedPackRef.current?.manifest,
+      ).totalMs;
+      transientTimerRef.current = window.setTimeout(() => {
+        setTransientAnimation(null);
+        transientTimerRef.current = null;
+      }, duration);
+    },
+    [clearTransient],
+  );
 
   const enqueuePetSave = useCallback((next: Pet): Promise<void> => {
     const run = saveChainRef.current
@@ -308,10 +355,24 @@ export default function App() {
     };
   }, []);
 
+  useEffect(
+    () => () => {
+      if (transientTimerRef.current !== null) {
+        window.clearTimeout(transientTimerRef.current);
+      }
+    },
+    [],
+  );
+
   useEffect(() => {
     let cancelled = false;
 
     async function load() {
+      setStoredAnimationPack(null);
+      setRenderedAnimationPack(null);
+      renderedPackRef.current = null;
+      setAnimationPackError(false);
+
       try {
         const [petResult, loadedPreferences] = await Promise.all([
           repository.loadPet(),
@@ -345,6 +406,7 @@ export default function App() {
         petRef.current = advanced;
         setPet(advanced);
         setScreen('game');
+        clearTransient();
         lastSaveAttemptRef.current = Date.now();
         void enqueuePetSave(advanced);
 
@@ -354,6 +416,43 @@ export default function App() {
             'info',
           );
         }
+
+        void (async () => {
+          try {
+            const storedPack = await repository.loadAnimationPack(advanced.id);
+            if (cancelled || !mountedRef.current) {
+              return;
+            }
+            if (!storedPack) {
+              return;
+            }
+
+            setStoredAnimationPack(storedPack);
+            try {
+              const rendered = await renderAnimationPack(storedPack);
+              if (cancelled || !mountedRef.current) {
+                return;
+              }
+              setRenderedAnimationPack(rendered);
+              renderedPackRef.current = rendered;
+            } catch {
+              if (cancelled || !mountedRef.current) {
+                return;
+              }
+              setAnimationPackError(true);
+              setStorageWarning(
+                'The custom animation could not be loaded. Using the built-in animation.',
+              );
+            }
+          } catch {
+            if (cancelled || !mountedRef.current) {
+              return;
+            }
+            setStorageWarning(
+              'The custom animation could not be loaded. Using the built-in animation.',
+            );
+          }
+        })();
       } catch (error) {
         if (cancelled || !mountedRef.current) {
           return;
@@ -372,7 +471,7 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [enqueuePetSave, reloadKey, showToast]);
+  }, [clearTransient, enqueuePetSave, reloadKey, showToast]);
 
   useEffect(() => {
     if (screen !== 'game') {
@@ -407,6 +506,7 @@ export default function App() {
 
     const onVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
+        clearTransient();
         const current = petRef.current;
         if (current) {
           const next = advancePet(current, Date.now());
@@ -419,6 +519,7 @@ export default function App() {
     };
 
     const onPageHide = () => {
+      clearTransient();
       const current = petRef.current;
       if (current) {
         const next = advancePet(current, Date.now());
@@ -436,7 +537,14 @@ export default function App() {
       document.removeEventListener('visibilitychange', onVisibilityChange);
       window.removeEventListener('pagehide', onPageHide);
     };
-  }, [enqueuePetSave, maybeNotify, savePetNow, screen, updatePet]);
+  }, [
+    clearTransient,
+    enqueuePetSave,
+    maybeNotify,
+    savePetNow,
+    screen,
+    updatePet,
+  ]);
 
   useEffect(() => {
     if (!toast) {
@@ -502,12 +610,37 @@ export default function App() {
       setHighlightAction(null);
       showToast(result.message, result.kind);
 
+      if (result.changed) {
+        switch (action) {
+          case 'feed':
+            triggerTransient('feed');
+            break;
+          case 'play':
+            triggerTransient('play');
+            break;
+          case 'wake':
+            triggerTransient('wake');
+            break;
+          case 'sleep':
+          case 'walk':
+          case 'cancelWalk':
+            clearTransient();
+            break;
+        }
+      }
+
       if (result.changed || activityChanged) {
         lastSaveAttemptRef.current = now;
         await enqueuePetSave(result.pet);
       }
     },
-    [enqueuePetSave, showToast, updatePet],
+    [
+      clearTransient,
+      enqueuePetSave,
+      showToast,
+      triggerTransient,
+      updatePet,
+    ],
   );
 
   const handleAdopt = useCallback(
@@ -533,6 +666,12 @@ export default function App() {
       petRef.current = newPet;
       setPet(newPet);
       setScreen('game');
+      clearTransient();
+      setStoredAnimationPack(null);
+      setRenderedAnimationPack(null);
+      renderedPackRef.current = null;
+      setAnimationPackError(false);
+      setAnimationDialogOpen(false);
       lastSaveAttemptRef.current = Date.now();
       setToast({
         id: nextToastId(),
@@ -540,7 +679,7 @@ export default function App() {
         kind: 'success',
       });
     },
-    [nextToastId],
+    [clearTransient, nextToastId],
   );
 
   const handleSavePreferences = useCallback(
@@ -552,11 +691,64 @@ export default function App() {
     [enqueuePreferencesSave],
   );
 
+  const handleApplyAnimationPack = useCallback(
+    async (pack: ParsedAnimationPack, rendered: RenderedAnimationPack) => {
+      const current = petRef.current;
+      if (!current) {
+        throw new Error('No pet is active.');
+      }
+
+      const stored: StoredAnimationPack = {
+        manifest: pack.manifest,
+        frames: pack.frames,
+        appliedAt: Date.now(),
+      };
+
+      try {
+        await repository.saveAnimationPack(current.id, stored);
+      } catch {
+        throw new Error(
+          'The animation pack could not be saved. Your browser storage may be full or unavailable.',
+        );
+      }
+
+      setStoredAnimationPack(stored);
+      setRenderedAnimationPack(rendered);
+      renderedPackRef.current = rendered;
+      setAnimationPackError(false);
+      showToast('Custom animation applied.', 'success');
+    },
+    [showToast],
+  );
+
+  const handleRemoveAnimationPack = useCallback(async () => {
+    const current = petRef.current;
+    if (!current) {
+      return;
+    }
+
+    try {
+      await repository.deleteAnimationPack(current.id);
+    } catch {
+      throw new Error('The custom animation could not be removed.');
+    }
+
+    setStoredAnimationPack(null);
+    setRenderedAnimationPack(null);
+    renderedPackRef.current = null;
+    setAnimationPackError(false);
+    showToast('Custom animation removed.', 'info');
+  }, [showToast]);
+
   const handleReset = useCallback(async () => {
     resettingRef.current = true;
     try {
       await saveChainRef.current.catch(() => undefined);
       await preferencesChainRef.current.catch(() => undefined);
+      const current = petRef.current;
+      if (current) {
+        await repository.deleteAnimationPack(current.id);
+      }
       await repository.deletePet();
       clearAppLocalStorage();
       lastActionRef.current = {};
@@ -568,10 +760,16 @@ export default function App() {
 
       petRef.current = null;
       setPet(null);
+      setStoredAnimationPack(null);
+      setRenderedAnimationPack(null);
+      renderedPackRef.current = null;
+      setAnimationPackError(false);
       setStartupError(null);
       setStorageWarning(null);
       setSettingsOpen(false);
+      setAnimationDialogOpen(false);
       setHighlightAction(null);
+      clearTransient();
       setScreen('adoption');
       setToast({
         id: nextToastId(),
@@ -585,7 +783,7 @@ export default function App() {
     } finally {
       resettingRef.current = false;
     }
-  }, [nextToastId]);
+  }, [clearTransient, nextToastId]);
 
   const handleDeleteDatabase = useCallback(async () => {
     resettingRef.current = true;
@@ -603,12 +801,18 @@ export default function App() {
 
       petRef.current = null;
       setPet(null);
+      setStoredAnimationPack(null);
+      setRenderedAnimationPack(null);
+      renderedPackRef.current = null;
+      setAnimationPackError(false);
       preferencesRef.current = DEFAULT_PREFERENCES;
       setPreferences(DEFAULT_PREFERENCES);
       setStartupError(null);
       setStorageWarning(null);
       setSettingsOpen(false);
+      setAnimationDialogOpen(false);
       setHighlightAction(null);
+      clearTransient();
       setScreen('adoption');
       setToast({
         id: nextToastId(),
@@ -618,13 +822,16 @@ export default function App() {
     } finally {
       resettingRef.current = false;
     }
-  }, [nextToastId]);
+  }, [clearTransient, nextToastId]);
 
   const handleRetry = useCallback(() => {
     setStartupError(null);
     setScreen('loading');
     setReloadKey((key) => key + 1);
   }, []);
+
+  const animationState: AnimationState =
+    transientAnimation ?? (pet ? persistentAnimationFor(pet.activity) : 'idle');
 
   const feedbackBars = (
     <>
@@ -728,6 +935,9 @@ export default function App() {
 
       <PetScreen
         pet={pet}
+        animationState={animationState}
+        renderedAnimationPack={renderedAnimationPack}
+        reducedMotion={reducedMotion}
         onAction={handleAction}
         onOpenSettings={() => setSettingsOpen(true)}
         highlightAction={highlightAction}
@@ -736,10 +946,26 @@ export default function App() {
       <SettingsDialog
         open={settingsOpen}
         preferences={preferences}
+        customAnimationName={storedAnimationPack?.manifest.name ?? null}
+        customAnimationError={animationPackError}
         onClose={() => setSettingsOpen(false)}
         onSave={handleSavePreferences}
         onReset={handleReset}
         onDeleteDatabase={handleDeleteDatabase}
+        onManageAnimation={() => {
+          setSettingsOpen(false);
+          setAnimationDialogOpen(true);
+        }}
+      />
+
+      <AnimationPackDialog
+        open={animationDialogOpen}
+        customPackName={storedAnimationPack?.manifest.name ?? null}
+        customPackError={animationPackError}
+        reducedMotion={reducedMotion}
+        onClose={() => setAnimationDialogOpen(false)}
+        onApply={handleApplyAnimationPack}
+        onRemove={handleRemoveAnimationPack}
       />
     </main>
   );

@@ -736,16 +736,28 @@ fieldset {
   transform-origin: 100px 160px;
 }
 
-.pet-art--awake .pet-art__creature {
-  animation: pet-bob 3.6s ease-in-out infinite;
+.pet-art--anim-idle .pet-art__creature {
+  animation: pet-idle 500ms steps(4, end) infinite;
 }
 
-.pet-art--sleeping .pet-art__creature {
-  animation: pet-breathe 4.2s ease-in-out infinite;
+.pet-art--anim-feed .pet-art__creature {
+  animation: pet-feed 500ms steps(6, end) 1;
 }
 
-.pet-art--walking .pet-art__creature {
-  animation: pet-walk 0.72s ease-in-out infinite;
+.pet-art--anim-play .pet-art__creature {
+  animation: pet-play 667ms steps(8, end) 1;
+}
+
+.pet-art--anim-sleep .pet-art__creature {
+  animation: pet-sleep 1000ms steps(4, end) infinite;
+}
+
+.pet-art--anim-wake .pet-art__creature {
+  animation: pet-wake 400ms steps(4, end) 1;
+}
+
+.pet-art--anim-walk .pet-art__creature {
+  animation: pet-walk 600ms steps(6, end) infinite;
 }
 
 .pet-art__zzz-text {
@@ -1289,6 +1301,245 @@ fieldset {
   gap: 8px;
 }
 
+.custom-pet-renderer {
+  width: clamp(132px, 38vw, 172px);
+  height: auto;
+}
+
+.pet-stage__custom {
+  display: block;
+}
+
+/* ---------- Animation pack dialog ---------- */
+
+.animation-dialog {
+  width: min(640px, calc(100vw - 24px));
+  max-width: none;
+  max-height: calc(100dvh - 24px);
+  margin: auto;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+}
+
+.animation-dialog::backdrop {
+  background: rgb(47 31 21 / 62%);
+  backdrop-filter: blur(2px);
+}
+
+.animation-dialog__panel {
+  max-height: calc(100dvh - 24px);
+  padding: 17px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: var(--cream);
+  box-shadow: 0 22px 70px rgb(36 22 12 / 38%);
+}
+
+.animation-dialog__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.animation-dialog__header h2 {
+  margin: 0;
+  font-size: 1.45rem;
+  line-height: 1.1;
+}
+
+.animation-dialog__lede {
+  margin: 3px 0 0;
+  color: var(--ink-soft);
+  font-size: 0.84rem;
+}
+
+.animation-dialog__lede code {
+  padding: 1px 4px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--surface-strong);
+  font-size: 0.9em;
+}
+
+.animation-dialog__section {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 17px;
+  background: var(--surface);
+}
+
+.animation-dialog__section h3 {
+  margin: 0;
+  font-size: 0.98rem;
+}
+
+.animation-dialog__name {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.animation-dialog__meta,
+.animation-dialog__filename,
+.animation-dialog__description {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+.animation-dialog__status {
+  margin: 0;
+  color: var(--teal-strong);
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.animation-dialog__sample {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+}
+
+.animation-dialog__sample a {
+  color: var(--teal-strong);
+  font-weight: 700;
+}
+
+.animation-dialog__warning {
+  margin: 0;
+  padding: 8px 10px;
+  border-left: 4px solid #b7791f;
+  border-radius: 8px;
+  background: #fff7e3;
+  color: #68480a;
+  font-size: 0.82rem;
+}
+
+.animation-dialog__issues {
+  padding: 9px 11px;
+  border-left: 4px solid var(--danger);
+  border-radius: 8px;
+  background: var(--danger-soft);
+  color: #5e2019;
+  font-size: 0.82rem;
+}
+
+.animation-dialog__issues p {
+  margin: 0;
+  font-weight: 700;
+}
+
+.animation-dialog__issues ul {
+  margin: 5px 0 0;
+  padding-left: 1.2rem;
+}
+
+.animation-dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.file-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.file-field__label {
+  font-size: 0.86rem;
+  font-weight: 750;
+}
+
+.file-field input[type='file'] {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px;
+  border: 2px solid var(--border-strong);
+  border-radius: 12px;
+  background: var(--surface-strong);
+  color: var(--ink);
+  font-size: 0.85rem;
+}
+
+.file-field input[type='file']::file-selector-button {
+  min-height: 32px;
+  margin-right: 8px;
+  padding: 5px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--cream-deep);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.animation-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.animation-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-strong);
+  text-align: center;
+}
+
+.animation-preview__stage {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 100%;
+  min-height: 76px;
+}
+
+.animation-preview__canvas {
+  width: 72px;
+  height: auto;
+}
+
+.animation-preview__label {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.animation-preview__meta {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.65rem;
+}
+
+@media (max-width: 420px) {
+  .animation-preview-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 /* ---------- Motion ---------- */
 
 @keyframes loading-pulse {
@@ -1303,33 +1554,133 @@ fieldset {
   }
 }
 
-@keyframes pet-bob {
-  0%,
-  100% {
-    transform: translateY(0);
+@keyframes pet-idle {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  25% {
+    transform: translateY(-2px) scale(1.015, 0.985);
   }
   50% {
-    transform: translateY(-4px);
+    transform: translateY(0) scale(1);
+  }
+  75% {
+    transform: translateY(-1px) scale(0.99, 1.01);
+  }
+  100% {
+    transform: translateY(0) scale(1);
   }
 }
 
-@keyframes pet-breathe {
-  0%,
+@keyframes pet-feed {
+  0% {
+    transform: translateY(0) rotate(0);
+  }
+  17% {
+    transform: translateY(-3px) rotate(-2deg) scale(1.02, 0.98);
+  }
+  34% {
+    transform: translateY(0) rotate(1deg) scale(0.98, 1.02);
+  }
+  51% {
+    transform: translateY(-2px) rotate(-1deg);
+  }
+  68% {
+    transform: translateY(0) rotate(2deg);
+  }
+  85% {
+    transform: translateY(-1px) rotate(0);
+  }
   100% {
-    transform: scaleY(1);
+    transform: translateY(0) rotate(0);
+  }
+}
+
+@keyframes pet-play {
+  0% {
+    transform: translateY(0) rotate(0) scale(1);
+  }
+  12.5% {
+    transform: translateY(-8px) rotate(-4deg) scale(1.02, 0.98);
+  }
+  25% {
+    transform: translateY(-12px) rotate(0) scale(0.98, 1.02);
+  }
+  37.5% {
+    transform: translateY(-8px) rotate(4deg) scale(1.02, 0.98);
   }
   50% {
-    transform: scaleY(0.975);
+    transform: translateY(0) rotate(0) scale(1);
+  }
+  62.5% {
+    transform: translateY(-6px) rotate(-4deg);
+  }
+  75% {
+    transform: translateY(-10px) rotate(0);
+  }
+  87.5% {
+    transform: translateY(-4px) rotate(4deg);
+  }
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+}
+
+@keyframes pet-sleep {
+  0%,
+  100% {
+    transform: translateY(2px) scale(1, 0.98);
+  }
+  25% {
+    transform: translateY(1px) scale(1.01, 0.99);
+  }
+  50% {
+    transform: translateY(2px) scale(0.99, 1.01);
+  }
+  75% {
+    transform: translateY(3px) scale(1.005, 0.995);
+  }
+}
+
+@keyframes pet-wake {
+  0% {
+    transform: translateY(3px) scale(1, 0.96);
+  }
+  25% {
+    transform: translateY(-4px) scale(0.98, 1.04);
+  }
+  50% {
+    transform: translateY(-6px) scale(1.02, 0.98);
+  }
+  75% {
+    transform: translateY(-2px) scale(1);
+  }
+  100% {
+    transform: translateY(0) scale(1);
   }
 }
 
 @keyframes pet-walk {
-  0%,
-  100% {
-    transform: translateY(0) rotate(-1.5deg);
+  0% {
+    transform: translateY(0) rotate(-2deg);
   }
-  50% {
-    transform: translateY(-4px) rotate(1.5deg);
+  17% {
+    transform: translateY(-4px) rotate(1deg);
+  }
+  34% {
+    transform: translateY(0) rotate(2deg);
+  }
+  51% {
+    transform: translateY(-4px) rotate(-1deg);
+  }
+  68% {
+    transform: translateY(0) rotate(2deg);
+  }
+  85% {
+    transform: translateY(-3px) rotate(-2deg);
+  }
+  100% {
+    transform: translateY(0) rotate(-2deg);
   }
 }
 

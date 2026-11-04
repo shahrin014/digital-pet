@@ -2,9 +2,11 @@ import { deleteDB, openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import { DEFAULT_PREFERENCES } from '../game/constants';
 import { ACTIVITIES, SPECIES } from '../game/types';
 import type { Pet, Preferences } from '../game/types';
+import type { StoredAnimationPack } from '../animation/types';
 
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_NAME = 'state';
+const ANIMATION_PACKS_STORE = 'animationPacks';
 const PET_KEY = 'pet';
 const PREFERENCES_KEY = 'preferences';
 
@@ -12,6 +14,10 @@ interface DigitalPetDB extends DBSchema {
   state: {
     key: string;
     value: unknown;
+  };
+  animationPacks: {
+    key: string;
+    value: StoredAnimationPack;
   };
 }
 
@@ -26,6 +32,9 @@ export interface Repository {
   deletePet(): Promise<void>;
   loadPreferences(): Promise<Preferences>;
   savePreferences(preferences: Preferences): Promise<void>;
+  loadAnimationPack(petId: string): Promise<StoredAnimationPack | null>;
+  saveAnimationPack(petId: string, pack: StoredAnimationPack): Promise<void>;
+  deleteAnimationPack(petId: string): Promise<void>;
   clearAll(): Promise<void>;
   deleteDatabase(): Promise<void>;
   close(): Promise<void>;
@@ -112,6 +121,9 @@ export function createRepository(dbName = 'digital-pet'): Repository {
           if (!db.objectStoreNames.contains(STORE_NAME)) {
             db.createObjectStore(STORE_NAME);
           }
+          if (!db.objectStoreNames.contains(ANIMATION_PACKS_STORE)) {
+            db.createObjectStore(ANIMATION_PACKS_STORE);
+          }
         },
       }).catch((error: unknown) => {
         dbPromise = null;
@@ -171,9 +183,25 @@ export function createRepository(dbName = 'digital-pet'): Repository {
       await db.put(STORE_NAME, preferences, PREFERENCES_KEY);
     },
 
+    async loadAnimationPack(petId) {
+      const db = await getDb();
+      return (await db.get(ANIMATION_PACKS_STORE, petId)) ?? null;
+    },
+
+    async saveAnimationPack(petId, pack) {
+      const db = await getDb();
+      await db.put(ANIMATION_PACKS_STORE, pack, petId);
+    },
+
+    async deleteAnimationPack(petId) {
+      const db = await getDb();
+      await db.delete(ANIMATION_PACKS_STORE, petId);
+    },
+
     async clearAll() {
       const db = await getDb();
       await db.clear(STORE_NAME);
+      await db.clear(ANIMATION_PACKS_STORE);
     },
 
     async deleteDatabase() {
