@@ -17,39 +17,67 @@ The built-in species remain inline SVG. Each of the six states gets a CSS keyfra
 
 ### Custom pack rendering
 
-Render custom packs with a `<canvas>` and `drawImage` using a source rectangle for each frame:
+Custom packs use one SVG per frame in a fixed directory layout:
 
-- The atlas is six rows: idle, feed, play, sleep, wake, walk.
-- Row height is `frameHeight`; frame width is `frameWidth`.
-- PNG/WebP sheets are decoded directly. SVG sheets are loaded as isolated images, validated for forbidden content, and rasterized to an offscreen bitmap before cropping.
-- The player increments the frame at the manifest FPS, loops or stops at the end, and pauses when the document is hidden.
-- Scale the frame to fit the pet stage while preserving aspect ratio.
-- Under reduced motion, draw frame 0 and do not advance.
+```text
+.petpack
+├── manifest.json
+└── frames/
+    ├── idle/
+    │   ├── 0.svg
+    │   ├── 1.svg
+    │   └── ...
+    ├── feed/
+    ├── play/
+    ├── sleep/
+    ├── wake/
+    └── walk/
+```
+
+At load:
+
+1. Read and validate the ZIP and manifest.
+2. Validate every frame's path, count, filename, viewBox, and SVG safety rules.
+3. Rasterize each SVG through an isolated image to a frame-sized bitmap.
+4. Cache the bitmaps in memory and draw the current frame to a canvas.
+5. Advance frames at the manifest FPS, loop or stop at the end, and pause when the document is hidden.
+6. Under reduced motion, draw frame 0 and do not advance.
+
+Every frame uses `viewBox="0 0 frameWidth frameHeight"` and places the pet's ground contact at the bottom-center of that box, so frames do not jitter between poses.
 
 ### Pack parsing and validation
 
 Add `fflate` as a small dependency to read the `.petpack` ZIP in memory. Validate:
 
 - ZIP signature and compressed/uncompressed size limits.
-- Exactly `manifest.json` plus `spritesheet.png`, `spritesheet.webp`, or `spritesheet.svg`.
-- Manifest schema, required states, frame counts, FPS, frame size, and atlas dimensions.
-- Sprite sheet decodes as a static PNG, WebP, or safe SVG; reject HTML, GIF, APNG, animated WebP, and unsafe SVG.
-- For SVG, reject scripts, event handlers, `foreignObject`, external `href`/`xlink:href`, embedded `<image>` elements, CSS animation declarations, and SVG animation elements.
-- Reject names/descriptions with markup; render them as text.
+- Exactly `manifest.json` plus the six `frames/<state>/` directories.
+- Manifest schema, required states, frame counts, FPS, and frame size.
+- Exactly `0.svg` through `{frames - 1}.svg` in each animation directory.
+- Each SVG has the declared viewBox and bottom-center ground anchor.
+- Each SVG is static and free of scripts, event handlers, `foreignObject`, external references, embedded `<image>` elements, CSS animation, and SVG animation elements.
+- No extra files or directories.
 
 Validation runs before anything is persisted. The preview uses the same renderer as gameplay so timing and scaling are accurate.
 
 ### Storage
 
-Bump the IndexedDB version to 2 and add an `animationPacks` object store keyed by pet id. Store `{ manifest, sheet: Blob, appliedAt }`. Keep at most one pack per pet; applying a new pack deletes the previous one in the same transaction. On load, decode the Blob into an `ImageBitmap`; revoke or close it when replaced.
+Bump the IndexedDB version to 2 and add an `animationPacks` object store keyed by pet id. Store `{ manifest, frames: Map<string, Blob>, appliedAt }`. Keep at most one pack per pet; applying a new pack deletes the previous one in the same transaction. On load, decode each frame Blob into an `ImageBitmap` and cache them. Close or discard bitmaps when replaced.
 
 If the pack cannot be read, fall back to the built-in animation and surface a non-blocking warning. Removing the pack deletes the record and returns to the built-in species art.
 
 ## Architecture Decisions
 
-### Decision: Canvas for custom packs, SVG/CSS for built-ins
+### Decision: SVG-only frame sets for v1
 
-Canvas gives exact control over arbitrary frame counts and FPS. Keeping built-ins in SVG avoids bundling sprite sheets and preserves crisp scaling.
+The custom pack format uses one static SVG per frame rather than a raster sprite sheet. This matches the built-in vector art, keeps assets crisp, and lets authors edit frames individually. Raster packs can be added later as a separate format version.
+
+### Decision: One file per frame
+
+One SVG per frame keeps the authoring model obvious and makes validation simple: count files, check names, check viewBox, check safety. A sprite sheet would require cropping and a second coordinate system.
+
+### Decision: Rasterize SVG before playback
+
+SVG files are loaded as isolated images and rasterized to frame-sized bitmaps. This prevents scripts and external resource loads, gives deterministic frame timing, and makes reduced-motion handling trivial.
 
 ### Decision: One pack per pet
 
@@ -58,14 +86,6 @@ The MVP has one active pet. One active pack keeps the UI and storage simple and 
 ### Decision: Fall back per state, not per pack
 
 If one animation is missing or fails at runtime, use the built-in animation for that state and keep the rest of the pack. This keeps the pet usable without silently discarding the whole appearance.
-
-### Decision: SVG source support with rasterized playback
-
-SVG sprite sheets are accepted as authoring source. The app loads them as isolated images, rejects scripts and external references, and rasterizes them to an offscreen bitmap before cropping frames. This keeps vector source art crisp without executing SVG content or depending on native SVG animation.
-
-### Decision: No executable or animated image formats
-
-Only static PNG/WebP sprite sheets and isolated static SVG sheets are accepted. The app controls timing from the manifest, which makes reduced motion and frame validation possible.
 
 ## Data Flow
 
@@ -78,7 +98,7 @@ Pet activity + transient action
    ┌────────┴────────┐
    ▼                 ▼
 Built-in SVG     Custom canvas
-keyframes        sprite player
+keyframes        frame player
    │                 │
    └────────┬────────┘
             ▼
@@ -90,11 +110,11 @@ keyframes        sprite player
 - `src/game/animation.ts` — state derivation and timing constants.
 - `src/game/animation.test.ts` — state and timing tests.
 - `src/components/PetArt.tsx` — built-in keyframe tracks.
-- `src/components/CustomPetRenderer.tsx` — canvas sprite player.
+- `src/components/CustomPetRenderer.tsx` — canvas frame player.
 - `src/components/AnimationPackDialog.tsx` — upload, validate, preview, apply.
 - `src/storage/animation-packs.ts` — IndexedDB storage and fallback.
 - `src/styles.css` — animation keyframes and preview layout.
-- `docs/animation-packs.md` — authoring guide and sample manifest.
+- `docs/animation-packs.md` — authoring guide and sample frame set.
 - `public/samples/example.petpack` — optional sample pack.
 
 ## Error Handling
@@ -102,13 +122,13 @@ keyframes        sprite player
 - Invalid pack: keep the dialog open, list field-level errors, and change nothing.
 - Storage quota: keep the current appearance, show an error, and do not leave a partial record.
 - Corrupt stored pack: fall back to built-in art for affected states and warn once.
-- Missing custom animation: fall back to the built-in animation for that state.
+- Missing custom frame: treat the affected animation as invalid and fall back to the built-in animation.
 - Blocked action: no animation; show the existing reason message.
 
 ## Testing Strategy
 
 - Unit-test animation state derivation, transient expiry, interruption, and reduced-motion mapping.
-- Unit-test manifest validation for every limit and error case.
+- Unit-test manifest and frame-set validation for every limit and error case.
 - Test IndexedDB round-trip, replacement, removal, and corrupt-pack fallback.
 - Use deterministic timers for frame tests.
 - Manual or E2E checks for upload, preview, apply, cancel, replace, and offline reload.

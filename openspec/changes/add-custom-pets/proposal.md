@@ -35,7 +35,7 @@ Out of scope until separately proposed:
 | 1 | Upload, builder, or both? | Changes the whole UX and storage model. | Start with a single image upload. |
 | 2 | Which formats and limits? | Security, storage quota, and rendering differ for PNG, WebP, and SVG. | PNG and WebP only; reject SVG. |
 | 3 | How is the image sized and cropped? | A consistent silhouette is needed for reactions and poses. | Client-side square crop with a preview. |
-| 4 | Static image or animation? | Animation raises complexity and file-size limits. | Static first; animation later. |
+| 4 | Static image or animation? | Animation raises complexity and file-size limits. | Animation format is specified in `add-pet-animations`. |
 | 5 | Are custom pets cosmetic only? | If stats differ, balance and fairness need rules. | Cosmetic only. |
 | 6 | Does a custom pet replace the species? | Affects adoption, storage, and fallback behavior. | Keep species as a hidden base; add an optional custom appearance. |
 | 7 | Where is the image stored? | IndexedDB quota is limited, especially on iOS. | IndexedDB as a blob, with size limits and downscaling. |
