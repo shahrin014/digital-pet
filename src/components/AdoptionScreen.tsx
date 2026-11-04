@@ -2,18 +2,19 @@ import { useId, useRef, useState, type FormEvent } from 'react';
 import { NAME_MAX_LENGTH } from '../game/constants';
 import { validateName } from '../game/engine';
 import { SPECIES, type Species } from '../game/types';
+import { useTranslation, type MessageKey } from '../i18n';
 import { PetArt } from './PetArt';
 
-const SPECIES_LABELS: Record<Species, string> = {
-  fox: 'Fox',
-  cat: 'Cat',
-  bunny: 'Bunny',
+const SPECIES_LABEL_KEYS: Record<Species, MessageKey> = {
+  fox: 'species.fox',
+  cat: 'species.cat',
+  bunny: 'species.bunny',
 };
 
-const SPECIES_BLURBS: Record<Species, string> = {
-  fox: 'Curious and a little mischievous.',
-  cat: 'Calm, cozy and fond of naps.',
-  bunny: 'Gentle and always up for a hop.',
+const SPECIES_BLURB_KEYS: Record<Species, MessageKey> = {
+  fox: 'adoption.blurb.fox',
+  cat: 'adoption.blurb.cat',
+  bunny: 'adoption.blurb.bunny',
 };
 
 export interface AdoptionScreenProps {
@@ -21,6 +22,7 @@ export interface AdoptionScreenProps {
 }
 
 export function AdoptionScreen({ onAdopt }: AdoptionScreenProps) {
+  const { t } = useTranslation();
   const idPrefix = useId();
   const nameId = `${idPrefix}-name`;
   const nameHintId = `${idPrefix}-name-hint`;
@@ -29,8 +31,8 @@ export function AdoptionScreen({ onAdopt }: AdoptionScreenProps) {
 
   const [name, setName] = useState('');
   const [species, setSpecies] = useState<Species | null>(null);
-  const [nameError, setNameError] = useState<string | null>(null);
-  const [speciesError, setSpeciesError] = useState<string | null>(null);
+  const [nameError, setNameError] = useState<MessageKey | null>(null);
+  const [speciesError, setSpeciesError] = useState<MessageKey | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -43,7 +45,8 @@ export function AdoptionScreen({ onAdopt }: AdoptionScreenProps) {
 
     const trimmedName = name.trim();
     const nextNameError = validateName(trimmedName);
-    const nextSpeciesError = species === null ? 'Please choose a species.' : null;
+    const nextSpeciesError: MessageKey | null =
+      species === null ? 'adoption.speciesRequired' : null;
 
     setNameError(nextNameError);
     setSpeciesError(nextSpeciesError);
@@ -64,7 +67,7 @@ export function AdoptionScreen({ onAdopt }: AdoptionScreenProps) {
       const message =
         error instanceof Error && error.message
           ? error.message
-          : 'Your pet could not be adopted. Please try again.';
+          : t('adoption.error');
       setSubmitError(message);
     } finally {
       setSubmitting(false);
@@ -74,18 +77,15 @@ export function AdoptionScreen({ onAdopt }: AdoptionScreenProps) {
   return (
     <div className="adoption-screen">
       <header className="adoption-header">
-        <p className="eyebrow">A cozy friend awaits</p>
-        <h1>Adopt a pet</h1>
-        <p className="adoption-lede">
-          Choose a name and a companion. Your pet lives only on this device, so
-          no account or sign-in is needed.
-        </p>
+        <p className="eyebrow">{t('adoption.eyebrow')}</p>
+        <h1>{t('adoption.title')}</h1>
+        <p className="adoption-lede">{t('adoption.lede')}</p>
       </header>
 
       <form className="adoption-form" onSubmit={handleSubmit} noValidate>
         <div className="form-field">
           <label className="form-label" htmlFor={nameId}>
-            Pet name
+            {t('adoption.nameLabel')}
           </label>
           <input
             ref={nameInputRef}
@@ -107,11 +107,11 @@ export function AdoptionScreen({ onAdopt }: AdoptionScreenProps) {
             aria-invalid={nameError ? true : undefined}
           />
           <p className="form-hint" id={nameHintId}>
-            {NAME_MAX_LENGTH} characters or fewer, after trimming spaces.
+            {t('adoption.nameHint', { max: NAME_MAX_LENGTH })}
           </p>
           {nameError && (
             <p className="form-error" id={nameErrorId} role="alert">
-              {nameError}
+              {t(nameError, { max: NAME_MAX_LENGTH })}
             </p>
           )}
         </div>
@@ -123,7 +123,7 @@ export function AdoptionScreen({ onAdopt }: AdoptionScreenProps) {
           aria-describedby={speciesError ? speciesErrorId : undefined}
           aria-invalid={speciesError ? true : undefined}
         >
-          <legend className="form-label">Choose a species</legend>
+          <legend className="form-label">{t('adoption.speciesLegend')}</legend>
           <div className="species-grid">
             {SPECIES.map((option) => {
               const inputId = `${idPrefix}-species-${option}`;
@@ -143,7 +143,7 @@ export function AdoptionScreen({ onAdopt }: AdoptionScreenProps) {
                     name={`${idPrefix}-species`}
                     value={option}
                     checked={selected}
-                    aria-label={SPECIES_LABELS[option]}
+                    aria-label={t(SPECIES_LABEL_KEYS[option])}
                     onChange={() => {
                       setSpecies(option);
                       setSpeciesError(null);
@@ -154,18 +154,22 @@ export function AdoptionScreen({ onAdopt }: AdoptionScreenProps) {
                       name={name.trim() || 'Your pet'}
                       species={option}
                       activity="awake"
-                      label={`${SPECIES_LABELS[option]} illustration`}
+                      label={t('adoption.speciesIllustration', {
+                        species: t(SPECIES_LABEL_KEYS[option]),
+                      })}
                     />
                   </span>
                   <span className="species-card__body">
                     <span className="species-card__name">
-                      {SPECIES_LABELS[option]}
+                      {t(SPECIES_LABEL_KEYS[option])}
                     </span>
                     <span className="species-card__blurb">
-                      {SPECIES_BLURBS[option]}
+                      {t(SPECIES_BLURB_KEYS[option])}
                     </span>
                     <span className="species-card__check" aria-hidden="true">
-                      {selected ? 'Selected' : 'Choose'}
+                      {selected
+                        ? t('adoption.selected')
+                        : t('adoption.choose')}
                     </span>
                   </span>
                 </label>
@@ -174,7 +178,7 @@ export function AdoptionScreen({ onAdopt }: AdoptionScreenProps) {
           </div>
           {speciesError && (
             <p className="form-error" id={speciesErrorId} role="alert">
-              {speciesError}
+              {t(speciesError)}
             </p>
           )}
         </fieldset>
@@ -191,7 +195,7 @@ export function AdoptionScreen({ onAdopt }: AdoptionScreenProps) {
           aria-busy={submitting}
           disabled={submitting}
         >
-          {submitting ? 'Adopting…' : 'Adopt your pet'}
+          {submitting ? t('adoption.submitting') : t('adoption.submit')}
         </button>
       </form>
     </div>

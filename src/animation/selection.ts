@@ -1,4 +1,6 @@
 import { convertImageFileToSvg, FRAME_SIZE } from './convert';
+import { t } from '../i18n';
+import { ANIMATION_STATE_KEYS } from '../i18n/keys';
 import { AnimationPackError } from './errors';
 import type {
   AnimationClip,
@@ -44,7 +46,7 @@ export async function parseAnimationSelection(
   const name = selection.name.trim();
 
   if (name.length < 1 || name.length > 32) {
-    issues.push('Animation name must be between 1 and 32 characters.');
+    issues.push(t('animation.error.name'));
   }
 
   const sortedFrames = {} as Record<AnimationState, File[]>;
@@ -52,7 +54,7 @@ export async function parseAnimationSelection(
     const files = sortFrameFiles(selection.frames[state] ?? []);
     sortedFrames[state] = files;
     if (files.length < 1 || files.length > 24) {
-      issues.push(`${state}: select between 1 and 24 frames.`);
+      issues.push(t('animation.error.count', { state: t(ANIMATION_STATE_KEYS[state]) }));
     }
 
     const fps = selection.fps[state];
@@ -62,7 +64,7 @@ export async function parseAnimationSelection(
       fps < 4 ||
       fps > 30
     ) {
-      issues.push(`${state}: FPS must be an integer between 4 and 30.`);
+      issues.push(t('animation.error.fps', { state: t(ANIMATION_STATE_KEYS[state]) }));
     }
   }
 
@@ -81,7 +83,7 @@ export async function parseAnimationSelection(
         totalBytes += bytes.byteLength;
         if (totalBytes > MAX_CONVERTED_BYTES) {
           throw new AnimationPackError(
-            'The converted frames are larger than the 20 MB limit.',
+            t('animation.error.convertedTooLarge'),
           );
         }
         converted[state].push(bytes);
@@ -90,9 +92,13 @@ export async function parseAnimationSelection(
           issues.push(...error.issues);
         } else {
           issues.push(
-            `${file.name}: ${
-              error instanceof Error ? error.message : 'conversion failed.'
-            }`,
+            t('animation.error.convertFile', {
+              file: file.name,
+              detail:
+                error instanceof Error
+                  ? error.message
+                  : t('animation.error.generic'),
+            }),
           );
         }
       }

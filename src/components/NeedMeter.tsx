@@ -1,11 +1,12 @@
 import { needState, type NeedState } from '../game/engine';
+import { formatPercent, useTranslation, type MessageKey } from '../i18n';
 
-const STATE_LABELS: Record<NeedState, string> = {
-  empty: 'Empty',
-  low: 'Low',
-  okay: 'Okay',
-  good: 'Good',
-  great: 'Great',
+const STATE_KEYS: Record<NeedState, MessageKey> = {
+  empty: 'need.state.empty',
+  low: 'need.state.low',
+  okay: 'need.state.okay',
+  good: 'need.state.good',
+  great: 'need.state.great',
 };
 
 export interface NeedMeterProps {
@@ -18,16 +19,17 @@ export interface NeedMeterProps {
  * bar. The state text keeps the meaning available without colour vision.
  */
 export function NeedMeter({ label, value }: NeedMeterProps) {
+  const { t } = useTranslation();
   const rounded = Math.min(100, Math.max(0, Math.round(value)));
   const state = needState(rounded);
-  const stateLabel = STATE_LABELS[state];
+  const stateLabel = t(STATE_KEYS[state]);
 
   return (
     <div className={`need-meter need-meter--${state}`}>
       <div className="need-meter__header">
         <span className="need-meter__label">{label}</span>
         <span className="need-meter__value" aria-hidden="true">
-          {rounded}%
+          {formatPercent(rounded)}
         </span>
         <span className="need-meter__state">{stateLabel}</span>
       </div>
@@ -38,7 +40,11 @@ export function NeedMeter({ label, value }: NeedMeterProps) {
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={rounded}
-        aria-valuetext={`${rounded} out of 100, ${stateLabel}`}
+        aria-valuetext={t('need.aria', {
+          label,
+          value: rounded,
+          state: stateLabel,
+        })}
       >
         <div
           className="need-meter__fill"

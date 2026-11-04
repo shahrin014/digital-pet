@@ -20,6 +20,8 @@ import type {
   RenderedAnimationPack,
 } from '../animation/types';
 import { ANIMATION_STATES } from '../animation/types';
+import { useTranslation } from '../i18n';
+import { ANIMATION_STATE_KEYS } from '../i18n/keys';
 import { CustomPetRenderer } from './CustomPetRenderer';
 
 export interface AnimationPackDialogProps {
@@ -62,12 +64,13 @@ export function AnimationPackDialog({
   onApply,
   onRemove,
 }: AnimationPackDialogProps) {
+  const { t } = useTranslation();
   const idPrefix = useId();
   const titleId = `${idPrefix}-title`;
   const descriptionId = `${idPrefix}-description`;
   const dialogRef = useRef<HTMLDialogElement>(null);
 
-  const [name, setName] = useState('Custom animation');
+  const [name, setName] = useState(() => t('animation.defaultName'));
   const [filesByState, setFilesByState] =
     useState<Record<AnimationState, File[]>>(emptyFiles);
   const [fpsByState, setFpsByState] =
@@ -110,7 +113,7 @@ export function AnimationPackDialog({
     if (!open) {
       return;
     }
-    setName('Custom animation');
+    setName(t('animation.defaultName'));
     setFilesByState(emptyFiles());
     setFpsByState(defaultFps());
     setParsed(null);
@@ -180,7 +183,7 @@ export function AnimationPackDialog({
         setError(
           caught instanceof Error
             ? caught.message
-            : 'The animation frames could not be prepared.',
+            : t('animation.error.generic'),
         );
       }
     } finally {
@@ -202,7 +205,7 @@ export function AnimationPackDialog({
       setError(
         caught instanceof Error
           ? caught.message
-          : 'The animation could not be saved.',
+          : t('animation.error.save'),
       );
     } finally {
       setBusy(false);
@@ -219,7 +222,7 @@ export function AnimationPackDialog({
       setError(
         caught instanceof Error
           ? caught.message
-          : 'The custom animation could not be removed.',
+          : t('animation.error.remove'),
       );
     } finally {
       setBusy(false);
@@ -238,17 +241,16 @@ export function AnimationPackDialog({
       <div className="animation-dialog__panel">
         <header className="animation-dialog__header">
           <div>
-            <h2 id={titleId}>Pet animation</h2>
+            <h2 id={titleId}>{t('animation.title')}</h2>
             <p id={descriptionId} className="animation-dialog__lede">
-              Select one or more images for each activity. Raster images are
-              traced into SVG paths in the browser before they are saved.
+              {t('animation.lede')}
             </p>
           </div>
           <button
             type="button"
             className="icon-button"
             onClick={onClose}
-            aria-label="Close animation settings"
+            aria-label={t('common.close')}
             disabled={busy}
           >
             <span aria-hidden="true">✕</span>
@@ -260,12 +262,11 @@ export function AnimationPackDialog({
             className="animation-dialog__section"
             aria-labelledby={`${idPrefix}-current`}
           >
-            <h3 id={`${idPrefix}-current`}>Current custom animation</h3>
+            <h3 id={`${idPrefix}-current`}>{t('animation.current')}</h3>
             <p className="animation-dialog__name">{customPackName}</p>
             {customPackError && (
               <p className="animation-dialog__warning" role="alert">
-                This animation could not be loaded. The built-in animation is
-                being used.
+                {t('animation.error')}
               </p>
             )}
             {!confirmRemove ? (
@@ -275,17 +276,16 @@ export function AnimationPackDialog({
                 onClick={() => setConfirmRemove(true)}
                 disabled={busy}
               >
-                Remove custom animation
+                {t('animation.remove')}
               </button>
             ) : (
               <div
                 className="danger-confirm"
                 role="group"
-                aria-label="Confirm removing custom animation"
+                aria-label={t('animation.removeConfirm')}
               >
                 <p className="danger-zone__warning">
-                  Remove this custom animation and return to the built-in species
-                  animation? This cannot be undone.
+                  {t('animation.removeConfirm')}
                 </p>
                 <div className="danger-zone__actions">
                   <button
@@ -296,7 +296,7 @@ export function AnimationPackDialog({
                     }}
                     disabled={busy}
                   >
-                    {busy ? 'Removing…' : 'Yes, remove it'}
+                    {busy ? t('animation.working') : t('animation.removeYes')}
                   </button>
                   <button
                     type="button"
@@ -304,7 +304,7 @@ export function AnimationPackDialog({
                     onClick={() => setConfirmRemove(false)}
                     disabled={busy}
                   >
-                    Keep it
+                    {t('animation.removeNo')}
                   </button>
                 </div>
               </div>
@@ -316,14 +316,13 @@ export function AnimationPackDialog({
           className="animation-dialog__section"
           aria-labelledby={`${idPrefix}-frames`}
         >
-          <h3 id={`${idPrefix}-frames`}>Frames</h3>
+          <h3 id={`${idPrefix}-frames`}>{t('animation.frames')}</h3>
           <p className="animation-dialog__meta">
-            Select 1–24 images per activity. Frames are sorted by filename, so
-            name them in playback order. PNG, JPEG, WebP, and SVG are accepted.
+            {t('animation.framesHint')}
           </p>
 
           <label className="motion-field">
-            <span className="motion-field__label">Animation name</span>
+            <span className="motion-field__label">{t('animation.name')}</span>
             <input
               className="text-input"
               type="text"
@@ -343,9 +342,9 @@ export function AnimationPackDialog({
               return (
                 <div className="frame-row" key={state}>
                   <div className="frame-row__heading">
-                    <span className="frame-row__name">{state}</span>
+                    <span className="frame-row__name">{t(ANIMATION_STATE_KEYS[state])}</span>
                     <span className="frame-row__count">
-                      {files.length} selected
+                      {t('animation.selected', { count: files.length })}
                     </span>
                   </div>
                   <div className="frame-row__controls">
@@ -353,18 +352,18 @@ export function AnimationPackDialog({
                       type="file"
                       multiple
                       accept={ACCEPT_IMAGES}
-                      aria-label={`${state} frames`}
+                      aria-label={t('animation.framesAria', { state: t(ANIMATION_STATE_KEYS[state]) })}
                       onChange={(event) => handleFilesChange(state, event)}
                       disabled={busy}
                     />
                     <label className="frame-row__fps">
-                      <span>FPS</span>
+                      <span>{t('animation.fps')}</span>
                       <input
                         type="number"
                         min={4}
                         max={30}
                         value={fpsByState[state]}
-                        aria-label={`${state} FPS`}
+                        aria-label={t('animation.fpsAria', { state: t(ANIMATION_STATE_KEYS[state]) })}
                         onChange={(event) =>
                           handleFpsChange(state, event.target.value)
                         }
@@ -393,13 +392,13 @@ export function AnimationPackDialog({
               }}
               disabled={busy}
             >
-              {busy ? 'Preparing…' : 'Preview animations'}
+              {busy ? t('animation.preparing') : t('animation.preview')}
             </button>
           </div>
 
           {busy && (
             <p className="animation-dialog__status" role="status">
-              Converting and validating frames…
+              {t('animation.converting')}
             </p>
           )}
           {error && (
@@ -409,7 +408,7 @@ export function AnimationPackDialog({
           )}
           {issues.length > 0 && (
             <div className="animation-dialog__issues" role="alert">
-              <p>These frames cannot be used:</p>
+              <p>{t('animation.issues')}</p>
               <ul>
                 {issues.map((issue, index) => (
                   <li key={`${index}-${issue}`}>{issue}</li>
@@ -424,11 +423,13 @@ export function AnimationPackDialog({
             className="animation-dialog__section"
             aria-labelledby={`${idPrefix}-preview`}
           >
-            <h3 id={`${idPrefix}-preview`}>Preview</h3>
+            <h3 id={`${idPrefix}-preview`}>{t('animation.previewTitle')}</h3>
             <p className="animation-dialog__name">{parsed.manifest.name}</p>
             <p className="animation-dialog__meta">
-              {parsed.manifest.frameWidth} × {parsed.manifest.frameHeight} px
-              per converted frame
+              {t('animation.frameSize', {
+                width: parsed.manifest.frameWidth,
+                height: parsed.manifest.frameHeight,
+              })}
             </p>
             <div className="animation-preview-grid">
               {ANIMATION_STATES.map((state: AnimationState) => {
@@ -441,14 +442,22 @@ export function AnimationPackDialog({
                         manifest={rendered.manifest}
                         animation={state}
                         reducedMotion={reducedMotion}
-                        label={`${state} animation preview`}
+                        label={t('animation.previewAria', { state: t(ANIMATION_STATE_KEYS[state]) })}
                         className="animation-preview__canvas"
                         loopOverride
                       />
                     </div>
-                    <p className="animation-preview__label">{state}</p>
+                    <p className="animation-preview__label">{t(ANIMATION_STATE_KEYS[state])}</p>
                     <p className="animation-preview__meta">
-                      {clip.frames} frames · {clip.fps} fps
+                      {t('animation.frameMeta', {
+                        frames: t(
+                          clip.frames === 1
+                            ? 'animation.frameCount.one'
+                            : 'animation.frameCount.other',
+                          { count: clip.frames },
+                        ),
+                        fps: clip.fps,
+                      })}
                     </p>
                   </div>
                 );
@@ -464,7 +473,7 @@ export function AnimationPackDialog({
             onClick={onClose}
             disabled={busy}
           >
-            Cancel
+            {t('animation.cancel')}
           </button>
           <button
             type="button"
@@ -474,7 +483,7 @@ export function AnimationPackDialog({
             }}
             disabled={busy || !parsed || !rendered}
           >
-            {busy ? 'Working…' : 'Apply animation'}
+            {busy ? t('animation.working') : t('animation.apply')}
           </button>
         </div>
       </div>

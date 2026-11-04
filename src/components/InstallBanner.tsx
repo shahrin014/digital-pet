@@ -1,3 +1,5 @@
+import { useTranslation } from '../i18n';
+
 export interface InstallBannerProps {
   canInstall: boolean;
   isIos: boolean;
@@ -11,16 +13,20 @@ export function InstallBanner({
   onInstall,
   onDismiss,
 }: InstallBannerProps) {
+  const { t } = useTranslation();
   const message = canInstall
-    ? 'Add it to your home screen for full-screen, offline play.'
+    ? t('install.available')
     : isIos
-      ? 'Tap Share, then Add to Home Screen.'
-      : 'Use your browser menu to add it to your home screen.';
+      ? t('install.ios')
+      : t('install.other');
 
   return (
-    <aside className="install-banner" aria-label="Install Digital Pet">
+    <aside
+      className="install-banner"
+      aria-label={t('install.aria')}
+    >
       <div className="install-banner__text">
-        <strong>Install Digital Pet</strong>
+        <strong>{t('install.title')}</strong>
         <span>{message}</span>
       </div>
       <div className="install-banner__actions">
@@ -32,14 +38,14 @@ export function InstallBanner({
               void onInstall();
             }}
           >
-            Install
+            {t('install.button')}
           </button>
         )}
         <button
           type="button"
           className="message-dismiss"
           onClick={onDismiss}
-          aria-label="Dismiss install prompt"
+          aria-label={t('install.dismiss')}
         >
           ✕
         </button>

@@ -1,4 +1,5 @@
 import ImageTracer from 'imagetracerjs';
+import { t } from '../i18n';
 import { AnimationPackError } from './errors';
 
 export const FRAME_SIZE = 512;
@@ -11,7 +12,7 @@ function loadImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image();
     image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error('The image could not be decoded.'));
+    image.onerror = () => reject(new Error(t('animation.error.image.decode')));
     image.src = url;
   });
 }
@@ -19,29 +20,29 @@ function loadImage(url: string): Promise<HTMLImageElement> {
 export function validateSvgSource(svgText: string, fileName: string): string[] {
   const issues: string[] = [];
   if (!/<svg\b/i.test(svgText)) {
-    return [`${fileName}: missing a root <svg> element.`];
+    return [t('animation.error.svg.root', { file: fileName })];
   }
 
   if (/<script\b/i.test(svgText)) {
-    issues.push(`${fileName}: <script> elements are not allowed.`);
+    issues.push(t('animation.error.svg.script', { file: fileName }));
   }
   if (/\son[a-z]+\s*=/i.test(svgText)) {
-    issues.push(`${fileName}: event-handler attributes are not allowed.`);
+    issues.push(t('animation.error.svg.event', { file: fileName }));
   }
   if (/<foreignObject\b/i.test(svgText)) {
-    issues.push(`${fileName}: <foreignObject> is not allowed.`);
+    issues.push(t('animation.error.svg.foreignObject', { file: fileName }));
   }
   if (/<(?:animate|animateTransform|set)\b/i.test(svgText)) {
-    issues.push(`${fileName}: SVG animation elements are not allowed.`);
+    issues.push(t('animation.error.svg.animation', { file: fileName }));
   }
   if (/@keyframes\b|animation\s*:|@import\b/i.test(svgText)) {
-    issues.push(`${fileName}: CSS animation and imports are not allowed.`);
+    issues.push(t('animation.error.svg.css', { file: fileName }));
   }
   if (/javascript\s*:/i.test(svgText)) {
-    issues.push(`${fileName}: javascript URLs are not allowed.`);
+    issues.push(t('animation.error.svg.javascript', { file: fileName }));
   }
   if (/\burl\(\s*['"]?\s*(?:https?:|\/\/|data:)/i.test(svgText)) {
-    issues.push(`${fileName}: external CSS URLs are not allowed.`);
+    issues.push(t('animation.error.svg.externalUrl', { file: fileName }));
   }
 
   for (const match of svgText.matchAll(
@@ -49,7 +50,7 @@ export function validateSvgSource(svgText: string, fileName: string): string[] {
   )) {
     const href = (match[1] ?? '').trim();
     if (!href.startsWith('#') && !EMBEDDED_IMAGE.test(href)) {
-      issues.push(`${fileName}: external href references are not allowed.`);
+      issues.push(t('animation.error.svg.href', { file: fileName }));
     }
   }
 
@@ -59,12 +60,12 @@ export function validateSvgSource(svgText: string, fileName: string): string[] {
 export async function convertImageFileToSvg(file: File): Promise<Uint8Array> {
   if (!ACCEPTED_EXTENSION.test(file.name)) {
     throw new AnimationPackError(
-      `${file.name}: use an SVG, PNG, JPEG, or WebP image.`,
+      t('animation.error.image.unsupported', { file: file.name }),
     );
   }
   if (file.size > MAX_SOURCE_BYTES) {
     throw new AnimationPackError(
-      `${file.name}: the image is larger than the 20 MB limit.`,
+      t('animation.error.image.tooLarge', { file: file.name }),
     );
   }
 
@@ -81,7 +82,7 @@ export async function convertImageFileToSvg(file: File): Promise<Uint8Array> {
     const sourceWidth = image.naturalWidth || image.width || FRAME_SIZE;
     const sourceHeight = image.naturalHeight || image.height || FRAME_SIZE;
     if (sourceWidth <= 0 || sourceHeight <= 0) {
-      throw new AnimationPackError(`${file.name}: the image has no size.`);
+      throw new AnimationPackError(t('animation.error.image.noSize', { file: file.name }));
     }
 
     const canvas = document.createElement('canvas');
@@ -89,7 +90,7 @@ export async function convertImageFileToSvg(file: File): Promise<Uint8Array> {
     canvas.height = FRAME_SIZE;
     const context = canvas.getContext('2d');
     if (!context) {
-      throw new AnimationPackError('Canvas rendering is not available.');
+      throw new AnimationPackError(t('animation.error.canvas'));
     }
 
     const scale = Math.min(

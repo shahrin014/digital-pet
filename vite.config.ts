@@ -21,7 +21,8 @@ export default defineConfig({
       manifest: {
         name: 'Digital Pet',
         short_name: 'Digital Pet',
-        description: 'A cozy local-first digital pet game.',
+        description: '居心地のいい、オフラインでも遊べるデジタルペットゲーム。',
+        lang: 'ja',
         theme_color: '#f4a261',
         background_color: '#fdf6ec',
         display: 'standalone',

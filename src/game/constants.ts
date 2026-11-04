@@ -25,6 +25,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
   quietStart: QUIET_HOURS_DEFAULT.start,
   quietEnd: QUIET_HOURS_DEFAULT.end,
   motion: 'system',
+  locale: 'ja',
 };
 
 export const AWAKE_DECAY_PER_HOUR = {

@@ -125,6 +125,7 @@ export function normalizePreferences(value: unknown): Preferences {
     motion: isMotionPreference(value.motion)
       ? value.motion
       : DEFAULT_PREFERENCES.motion,
+    locale: value.locale === 'en' ? 'en' : 'ja',
   };
 }
 
@@ -138,7 +139,8 @@ export function isPreferences(value: unknown): value is Preferences {
     typeof value.quietHoursEnabled === 'boolean' &&
     isTimeString(value.quietStart) &&
     isTimeString(value.quietEnd) &&
-    isMotionPreference(value.motion)
+    isMotionPreference(value.motion) &&
+    (value.locale === 'ja' || value.locale === 'en')
   );
 }
 

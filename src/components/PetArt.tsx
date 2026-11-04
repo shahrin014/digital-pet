@@ -1,15 +1,14 @@
 import type { Activity, Species } from '../game/types';
 import {
-  ANIMATION_LABELS,
   persistentAnimationFor,
   type AnimationState,
 } from '../animation/types';
-
-const ACTIVITY_LABELS: Record<Activity, string> = {
-  awake: 'awake',
-  sleeping: 'sleeping',
-  walking: 'walking',
-};
+import { useTranslation } from '../i18n';
+import {
+  ACTIVITY_KEYS,
+  ANIMATION_STATE_KEYS,
+  SPECIES_KEYS,
+} from '../i18n/keys';
 
 export interface PetArtProps {
   name: string;
@@ -144,10 +143,16 @@ export function PetArt({
   label,
   className,
 }: PetArtProps) {
+  const { t } = useTranslation();
   const resolvedAnimation = animation ?? persistentAnimationFor(activity);
   const accessibleLabel =
     label ??
-    `${name} the ${species}, ${ACTIVITY_LABELS[activity]}, ${ANIMATION_LABELS[resolvedAnimation]} animation`;
+    t('pet.aria', {
+      name,
+      species: t(SPECIES_KEYS[species]),
+      activity: t(ACTIVITY_KEYS[activity]),
+      animation: t(ANIMATION_STATE_KEYS[resolvedAnimation]),
+    });
   const classes = [
     'pet-art',
     `pet-art--${species}`,

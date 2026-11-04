@@ -1,8 +1,18 @@
 import { useEffect, useId, useRef } from 'react';
 import { actionAvailability } from '../game/engine';
 import type { ActionType, Pet } from '../game/types';
+import { useTranslation, type MessageKey } from '../i18n';
 
 type ControlKey = 'feed' | 'play' | 'sleep' | 'walk';
+
+const ACTION_LABEL_KEYS: Record<ActionType, MessageKey> = {
+  feed: 'actions.feed',
+  play: 'actions.play',
+  sleep: 'actions.sleep',
+  wake: 'actions.wake',
+  walk: 'actions.walk',
+  cancelWalk: 'actions.cancelWalk',
+};
 
 interface ActionControl {
   key: ControlKey;
@@ -101,23 +111,49 @@ function ActionGlyph({ action }: { action: ActionType }) {
  * aria-disabled instead of the native disabled attribute.
  */
 export function ActionBar({ pet, onAction, highlightAction }: ActionBarProps) {
+  const { t } = useTranslation();
   const idPrefix = useId();
   const refs = useRef<Partial<Record<ControlKey, HTMLButtonElement | null>>>({});
 
   const controls: ActionControl[] = [
-    { key: 'feed', action: 'feed', icon: 'feed', label: 'Feed' },
-    { key: 'play', action: 'play', icon: 'play', label: 'Play' },
+    {
+      key: 'feed',
+      action: 'feed',
+      icon: 'feed',
+      label: t(ACTION_LABEL_KEYS.feed),
+    },
+    {
+      key: 'play',
+      action: 'play',
+      icon: 'play',
+      label: t(ACTION_LABEL_KEYS.play),
+    },
     pet.activity === 'sleeping'
-      ? { key: 'sleep', action: 'wake', icon: 'wake', label: 'Wake' }
-      : { key: 'sleep', action: 'sleep', icon: 'sleep', label: 'Sleep' },
+      ? {
+          key: 'sleep',
+          action: 'wake',
+          icon: 'wake',
+          label: t(ACTION_LABEL_KEYS.wake),
+        }
+      : {
+          key: 'sleep',
+          action: 'sleep',
+          icon: 'sleep',
+          label: t(ACTION_LABEL_KEYS.sleep),
+        },
     pet.activity === 'walking'
       ? {
           key: 'walk',
           action: 'cancelWalk',
           icon: 'cancelWalk',
-          label: 'Cancel walk',
+          label: t(ACTION_LABEL_KEYS.cancelWalk),
         }
-      : { key: 'walk', action: 'walk', icon: 'walk', label: 'Walk' },
+      : {
+          key: 'walk',
+          action: 'walk',
+          icon: 'walk',
+          label: t(ACTION_LABEL_KEYS.walk),
+        },
   ];
 
   const activeKey: ControlKey | null =
@@ -141,7 +177,7 @@ export function ActionBar({ pet, onAction, highlightAction }: ActionBarProps) {
   }, [activeKey]);
 
   return (
-    <div className="action-bar" role="group" aria-label="Care actions">
+    <div className="action-bar" role="group" aria-label={t('actions.group')}>
       {controls.map((control) => {
         const availability = actionAvailability(pet, control.action);
         const reasonId = `${idPrefix}-${control.key}-reason`;
@@ -166,7 +202,7 @@ export function ActionBar({ pet, onAction, highlightAction }: ActionBarProps) {
             className={classes}
             aria-disabled={!availability.available}
             aria-describedby={
-              !availability.available && availability.reason
+              !availability.available && availability.reasonKey
                 ? reasonId
                 : undefined
             }
@@ -179,12 +215,12 @@ export function ActionBar({ pet, onAction, highlightAction }: ActionBarProps) {
             <span className="action-button__label">{control.label}</span>
             {!availability.available && (
               <span className="action-button__unavailable" aria-hidden="true">
-                Unavailable
+                {t('actions.unavailable')}
               </span>
             )}
-            {!availability.available && availability.reason && (
+            {!availability.available && availability.reasonKey && (
               <span id={reasonId} className="visually-hidden">
-                {availability.reason}
+                {t(availability.reasonKey, availability.reasonParams)}
               </span>
             )}
           </button>

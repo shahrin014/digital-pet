@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { setLocale } from '../i18n';
 import { validateSvgSource } from './convert';
 import { AnimationPackError } from './errors';
 import {
@@ -11,6 +12,10 @@ import type { AnimationState } from './types';
 import { ANIMATION_STATES } from './types';
 
 const decoder = new TextDecoder();
+
+beforeEach(() => {
+  setLocale('en');
+});
 
 function file(name: string): File {
   return new File([name], name, { type: 'image/png' });

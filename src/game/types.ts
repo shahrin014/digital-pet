@@ -1,3 +1,6 @@
+import type { Locale } from '../i18n/messages';
+import type { MessageKey } from '../i18n/messages';
+
 export const SPECIES = ['fox', 'cat', 'bunny'] as const;
 export type Species = (typeof SPECIES)[number];
 
@@ -30,16 +33,19 @@ export interface Preferences {
   quietStart: string;
   quietEnd: string;
   motion: MotionPreference;
+  locale: Locale;
 }
 
 export interface ActionResult {
   pet: Pet;
   changed: boolean;
-  message: string;
+  messageKey: MessageKey;
+  messageParams?: Record<string, string | number>;
   kind: MessageKind;
 }
 
 export interface Availability {
   available: boolean;
-  reason?: string;
+  reasonKey?: MessageKey;
+  reasonParams?: Record<string, string | number>;
 }

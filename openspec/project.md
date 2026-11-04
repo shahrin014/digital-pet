@@ -30,7 +30,7 @@ These are starting points, not requirements. The behavior specs do not depend on
 - TypeScript strict mode; no implicit `any`.
 - Small, focused modules with game balance values kept in one tunable configuration module.
 - UI components are presentational; game rules live in framework-independent modules that can be unit tested.
-- User-facing strings are centralized so localization can be added later.
+- User-facing strings live in `src/i18n/messages.ts`. Japanese is the default language and English is the second language.
 - No `console.log` noise in production builds.
 
 ### Architecture Patterns
@@ -122,6 +122,6 @@ These are ideas under consideration, not committed behavior. They need a proposa
 - **Accounts and sync.** Cross-device backup and restore.
 - **Social features.** Visiting or sharing pets with other players.
 - **Widgets and richer notifications.** Home-screen widgets, reliable scheduled push.
-- **Localization.** Additional languages and right-to-left layouts.
+- **Localization.** Japanese and English are supported; additional languages and right-to-left layouts remain future work.
 - **Monetization.** Any paid content, cosmetics, or subscriptions.
 - **Export/import.** A portable save file so players can back up or move their pet.

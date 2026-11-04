@@ -14,6 +14,7 @@ import {
   WALK_DURATION_MS,
   NAME_MAX_LENGTH,
 } from './constants';
+import type { MessageKey } from '../i18n/messages';
 import type {
   ActionType,
   ActionResult,
@@ -38,13 +39,13 @@ function createId(): string {
   return `pet-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-export function validateName(name: string): string | null {
+export function validateName(name: string): MessageKey | null {
   const trimmed = name.trim();
   if (trimmed.length === 0) {
-    return 'Please give your pet a name.';
+    return 'adoption.nameEmpty';
   }
   if (trimmed.length > NAME_MAX_LENGTH) {
-    return `Names can be at most ${NAME_MAX_LENGTH} characters.`;
+    return 'adoption.nameTooLong';
   }
   return null;
 }
@@ -209,27 +210,48 @@ export function actionAvailability(
   switch (action) {
     case 'feed':
       if (pet.activity === 'sleeping') {
-        return { available: false, reason: `${name} is asleep. Wake them first.` };
+        return {
+          available: false,
+          reasonKey: 'action.feed.blocked.asleep',
+          reasonParams: { name },
+        };
       }
       if (pet.activity === 'walking') {
-        return { available: false, reason: `${name} is on a walk.` };
+        return {
+          available: false,
+          reasonKey: 'action.feed.blocked.walking',
+          reasonParams: { name },
+        };
       }
       if (pet.fullness >= FEED.maxFullness) {
-        return { available: false, reason: `${name} is already full.` };
+        return {
+          available: false,
+          reasonKey: 'action.feed.blocked.full',
+          reasonParams: { name },
+        };
       }
       return { available: true };
 
     case 'play':
       if (pet.activity === 'sleeping') {
-        return { available: false, reason: `${name} is asleep. Wake them first.` };
+        return {
+          available: false,
+          reasonKey: 'action.play.blocked.asleep',
+          reasonParams: { name },
+        };
       }
       if (pet.activity === 'walking') {
-        return { available: false, reason: `${name} is on a walk.` };
+        return {
+          available: false,
+          reasonKey: 'action.play.blocked.walking',
+          reasonParams: { name },
+        };
       }
       if (pet.energy < PLAY.minEnergy) {
         return {
           available: false,
-          reason: `${name} is too tired to play. Try a nap.`,
+          reasonKey: 'action.play.blocked.tired',
+          reasonParams: { name },
         };
       }
       return { available: true };
@@ -239,30 +261,55 @@ export function actionAvailability(
         return { available: true };
       }
       if (pet.activity === 'sleeping') {
-        return { available: false, reason: `${name} is already asleep.` };
+        return {
+          available: false,
+          reasonKey: 'action.sleep.blocked.asleep',
+          reasonParams: { name },
+        };
       }
-      return { available: false, reason: `${name} is on a walk.` };
+      return {
+        available: false,
+        reasonKey: 'action.sleep.blocked.walking',
+        reasonParams: { name },
+      };
 
     case 'wake':
       if (pet.activity === 'sleeping') {
         return { available: true };
       }
       if (pet.activity === 'awake') {
-        return { available: false, reason: `${name} is already awake.` };
+        return {
+          available: false,
+          reasonKey: 'action.wake.blocked.awake',
+          reasonParams: { name },
+        };
       }
-      return { available: false, reason: `${name} is on a walk.` };
+      return {
+        available: false,
+        reasonKey: 'action.wake.blocked.walking',
+        reasonParams: { name },
+      };
 
     case 'walk':
       if (pet.activity === 'sleeping') {
-        return { available: false, reason: `${name} is asleep. Wake them first.` };
+        return {
+          available: false,
+          reasonKey: 'action.walk.blocked.asleep',
+          reasonParams: { name },
+        };
       }
       if (pet.activity === 'walking') {
-        return { available: false, reason: `${name} is already on a walk.` };
+        return {
+          available: false,
+          reasonKey: 'action.walk.blocked.walking',
+          reasonParams: { name },
+        };
       }
       if (pet.energy < WALK.minEnergy) {
         return {
           available: false,
-          reason: `${name} needs more energy before a walk.`,
+          reasonKey: 'action.walk.blocked.tired',
+          reasonParams: { name },
         };
       }
       return { available: true };
@@ -271,7 +318,11 @@ export function actionAvailability(
       if (pet.activity === 'walking') {
         return { available: true };
       }
-      return { available: false, reason: `${name} is not on a walk.` };
+      return {
+        available: false,
+        reasonKey: 'action.walk.blocked.notWalking',
+        reasonParams: { name },
+      };
   }
 }
 
@@ -287,7 +338,8 @@ export function applyAction(
     return {
       pet: current,
       changed: false,
-      message: availability.reason ?? 'That action is not available right now.',
+      messageKey: availability.reasonKey ?? 'action.blocked.generic',
+      messageParams: availability.reasonParams,
       kind: 'info',
     };
   }
@@ -306,7 +358,8 @@ export function applyAction(
       return {
         pet: next,
         changed: true,
-        message: `${name} enjoyed a snack!`,
+        messageKey: 'action.feed.success',
+        messageParams: { name },
         kind: 'success',
       };
     }
@@ -322,7 +375,8 @@ export function applyAction(
       return {
         pet: next,
         changed: true,
-        message: `${name} had fun playing!`,
+        messageKey: 'action.play.success',
+        messageParams: { name },
         kind: 'success',
       };
     }
@@ -336,7 +390,8 @@ export function applyAction(
       return {
         pet: next,
         changed: true,
-        message: `${name} is settling down for a nap.`,
+        messageKey: 'action.sleep.success',
+        messageParams: { name },
         kind: 'success',
       };
     }
@@ -350,7 +405,8 @@ export function applyAction(
       return {
         pet: next,
         changed: true,
-        message: `${name} woke up.`,
+        messageKey: 'action.wake.success',
+        messageParams: { name },
         kind: 'success',
       };
     }
@@ -365,7 +421,8 @@ export function applyAction(
       return {
         pet: next,
         changed: true,
-        message: `${name} is off on a walk!`,
+        messageKey: 'action.walk.success',
+        messageParams: { name },
         kind: 'success',
       };
     }
@@ -380,7 +437,8 @@ export function applyAction(
       return {
         pet: next,
         changed: true,
-        message: `Walk cancelled. ${name} is back.`,
+        messageKey: 'action.walk.cancelled',
+        messageParams: { name },
         kind: 'info',
       };
     }

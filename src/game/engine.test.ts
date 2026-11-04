@@ -52,12 +52,12 @@ describe('validateName', () => {
   });
 
   it('rejects empty and whitespace-only names', () => {
-    expect(validateName('')).toBeTruthy();
-    expect(validateName('   ')).toBeTruthy();
+    expect(validateName('')).toBe('adoption.nameEmpty');
+    expect(validateName('   ')).toBe('adoption.nameEmpty');
   });
 
   it('rejects names longer than 24 characters', () => {
-    expect(validateName('a'.repeat(25))).toBeTruthy();
+    expect(validateName('a'.repeat(25))).toBe('adoption.nameTooLong');
   });
 
   it('accepts exactly 24 characters', () => {
@@ -220,7 +220,7 @@ describe('actions', () => {
     expect(result.pet.fullness).toBe(96);
     expect(result.pet.energy).toBe(before.energy);
     expect(result.pet.happiness).toBe(before.happiness);
-    expect(result.message).toContain('already full');
+    expect(result.messageKey).toBe('action.feed.blocked.full');
   });
 
   it('blocks feeding a sleeping pet', () => {
@@ -228,7 +228,7 @@ describe('actions', () => {
 
     expect(result.changed).toBe(false);
     expect(result.pet.activity).toBe('sleeping');
-    expect(result.message).toContain('asleep');
+    expect(result.messageKey).toBe('action.feed.blocked.asleep');
   });
 
   it('plays with an energetic pet', () => {
@@ -249,7 +249,7 @@ describe('actions', () => {
 
     expect(result.changed).toBe(false);
     expect(result.pet.energy).toBe(10);
-    expect(result.message).toContain('too tired');
+    expect(result.messageKey).toBe('action.play.blocked.tired');
   });
 
   it('puts the pet to sleep and wakes it again', () => {
@@ -277,7 +277,7 @@ describe('actions', () => {
 
     expect(result.changed).toBe(false);
     expect(result.pet.activity).toBe('awake');
-    expect(result.message).toContain('more energy');
+    expect(result.messageKey).toBe('action.walk.blocked.tired');
   });
 
   it('blocks conflicting actions during a walk', () => {
@@ -302,7 +302,8 @@ describe('actions', () => {
   it('reports availability reasons', () => {
     expect(actionAvailability(pet({ energy: 10 }), 'play')).toEqual({
       available: false,
-      reason: 'Mochi is too tired to play. Try a nap.',
+      reasonKey: 'action.play.blocked.tired',
+      reasonParams: { name: 'Mochi' },
     });
     expect(actionAvailability(pet(), 'feed')).toEqual({ available: true });
   });

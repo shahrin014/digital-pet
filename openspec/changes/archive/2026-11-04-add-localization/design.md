@@ -9,7 +9,7 @@ Add `src/i18n/messages.ts` with two typed dictionaries:
 - `ja`: the default Japanese dictionary
 - `en`: the English dictionary
 
-Export a `MessageKey` union derived from the dictionaries and a `t(key, params?)` helper. A `LocaleProvider` supplies the active locale and translator through React context. The provider also sets `document.documentElement.lang` whenever the locale changes.
+Export a `MessageKey` union derived from the dictionaries and a `t(key, params?)` helper. A small locale store supplies the active locale and translator through `useLocale` and `useTranslation`. The store also sets `document.documentElement.lang` whenever the locale changes.
 
 Keep Japanese and English keys in parity with a unit test that compares the key sets.
 
@@ -85,7 +85,7 @@ There is one secondary surface. A gear button is direct, discoverable, and keybo
 ## File Changes
 
 - `src/i18n/messages.ts` — Japanese and English dictionaries.
-- `src/i18n/LocaleProvider.tsx` — provider, `useLocale`, `t()`.
+- `src/i18n/index.ts` — locale store, `useLocale`, `useTranslation`, `t()`.
 - `src/game/types.ts`, `engine.ts`, `engine.test.ts` — structured messages.
 - `src/game/constants.ts`, `src/game/types.ts`, `src/storage/repository.ts` — locale preference.
 - `src/App.tsx`, components — use translations.

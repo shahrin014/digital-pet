@@ -113,6 +113,7 @@ describe('repository', () => {
       quietStart: '21:30',
       quietEnd: '07:15',
       motion: 'reduced' as const,
+      locale: 'en' as const,
     };
 
     await repo.savePreferences(preferences);
@@ -141,6 +142,7 @@ describe('repository', () => {
       quietStart: '21:30',
       quietEnd: '07:15',
       motion: 'system',
+      locale: 'ja',
     });
   });
 
@@ -231,6 +233,9 @@ describe('validators', () => {
     ).toBe(false);
     expect(
       isPreferences({ ...DEFAULT_PREFERENCES, motion: 'sometimes' }),
+    ).toBe(false);
+    expect(
+      isPreferences({ ...DEFAULT_PREFERENCES, locale: 'fr' }),
     ).toBe(false);
     expect(isPreferences({ browserNotifications: 'yes' })).toBe(false);
   });

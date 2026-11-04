@@ -5,35 +5,25 @@ import {
   remainingWalkMs,
   walkProgress,
 } from '../game/engine';
-import type { ActionType, Activity, Mood, NeedKey, Pet } from '../game/types';
-import {
-  ANIMATION_LABELS,
-  type AnimationState,
-  type RenderedAnimationPack,
+import type { ActionType, NeedKey, Pet } from '../game/types';
+import type {
+  AnimationState,
+  RenderedAnimationPack,
 } from '../animation/types';
+import {
+  ACTIVITY_KEYS,
+  ANIMATION_STATE_KEYS,
+  MOOD_KEYS,
+  NEED_KEYS,
+  SPECIES_KEYS,
+} from '../i18n/keys';
+import { useTranslation } from '../i18n';
 import { ActionBar } from './ActionBar';
 import { CustomPetRenderer } from './CustomPetRenderer';
 import { NeedMeter } from './NeedMeter';
 import { PetArt } from './PetArt';
 
-const MOOD_LABELS: Record<Mood, string> = {
-  happy: 'Happy',
-  content: 'Content',
-  needy: 'Needy',
-  critical: 'Needs care',
-};
-
-const ACTIVITY_LABELS: Record<Activity, string> = {
-  awake: 'Awake',
-  sleeping: 'Sleeping',
-  walking: 'On a walk',
-};
-
-const NEEDS: ReadonlyArray<{ key: NeedKey; label: string }> = [
-  { key: 'fullness', label: 'Fullness' },
-  { key: 'energy', label: 'Energy' },
-  { key: 'happiness', label: 'Happiness' },
-];
+const NEEDS: ReadonlyArray<NeedKey> = ['fullness', 'energy', 'happiness'];
 
 export interface PetScreenProps {
   pet: Pet;
@@ -54,6 +44,7 @@ export function PetScreen({
   onOpenSettings,
   highlightAction = null,
 }: PetScreenProps) {
+  const { t } = useTranslation();
   const [now, setNow] = useState(() => Date.now());
   const mood = deriveMood(pet);
   const walking = pet.activity === 'walking';
@@ -79,7 +70,7 @@ export function PetScreen({
         <div className="pet-header__identity">
           <h1 className="pet-header__name">{pet.name}</h1>
           <p className="pet-header__mood">
-            Mood: <strong>{MOOD_LABELS[mood]}</strong>
+            {t('mood.label', { mood: t(MOOD_KEYS[mood]) })}
           </p>
         </div>
         <button
@@ -99,11 +90,14 @@ export function PetScreen({
             />
             <circle cx="12" cy="12" r="3.1" fill="var(--cream)" />
           </svg>
-          <span>Settings</span>
+          <span>{t('pet.settings')}</span>
         </button>
       </header>
 
-      <section className="pet-card" aria-label={`${pet.name}'s status`}>
+      <section
+        className="pet-card"
+        aria-label={t('pet.statusAria', { name: pet.name })}
+      >
         <div className="pet-stage">
           {renderedAnimationPack ? (
             <CustomPetRenderer
@@ -111,7 +105,12 @@ export function PetScreen({
               manifest={renderedAnimationPack.manifest}
               animation={animationState}
               reducedMotion={reducedMotion}
-              label={`${pet.name} the ${pet.species}, ${ACTIVITY_LABELS[pet.activity]}, ${ANIMATION_LABELS[animationState]} animation`}
+              label={t('pet.aria', {
+                name: pet.name,
+                species: t(SPECIES_KEYS[pet.species]),
+                activity: t(ACTIVITY_KEYS[pet.activity]),
+                animation: t(ANIMATION_STATE_KEYS[animationState]),
+              })}
               className="pet-stage__custom"
             />
           ) : (
@@ -127,30 +126,29 @@ export function PetScreen({
         <div className="pet-card__status">
           <span className={`activity-badge activity-badge--${pet.activity}`}>
             <span className="activity-badge__dot" aria-hidden="true" />
-            {ACTIVITY_LABELS[pet.activity]}
+            {t(ACTIVITY_KEYS[pet.activity])}
           </span>
           <span className="pet-card__species">
-            {pet.species[0]?.toUpperCase()}
-            {pet.species.slice(1)}
+            {t(SPECIES_KEYS[pet.species])}
           </span>
         </div>
 
         {walking && (
           <div className="walk-progress">
             <div className="walk-progress__header">
-              <span>Walk in progress</span>
+              <span>{t('walk.inProgress')}</span>
               <span className="walk-progress__time">
-                {remainingText} remaining
+                {t('walk.remaining', { time: remainingText })}
               </span>
             </div>
             <div
               className="walk-progress__track"
               role="progressbar"
-              aria-label="Walk progress"
+              aria-label={t('walk.progress')}
               aria-valuemin={0}
               aria-valuemax={100}
               aria-valuenow={progressPercent}
-              aria-valuetext={`${remainingText} remaining`}
+              aria-valuetext={t('walk.remaining', { time: remainingText })}
             >
               <div
                 className="walk-progress__fill"
@@ -164,14 +162,14 @@ export function PetScreen({
 
       <section className="needs-panel" aria-labelledby="needs-heading">
         <h2 className="section-heading" id="needs-heading">
-          Needs
+          {t('needs.heading')}
         </h2>
         <div className="needs-panel__meters">
           {NEEDS.map((need) => (
             <NeedMeter
-              key={need.key}
-              label={need.label}
-              value={pet[need.key]}
+              key={need}
+              label={t(NEED_KEYS[need])}
+              value={pet[need]}
             />
           ))}
         </div>

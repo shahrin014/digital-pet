@@ -22,9 +22,19 @@ import {
 import { useInstallPrompt } from './pwa/useInstallPrompt';
 import {
   DEFAULT_PREFERENCES,
+  NAME_MAX_LENGTH,
   REMINDER_INTERVAL_MS,
   REMINDER_THRESHOLD,
 } from './game/constants';
+import {
+  formatList,
+  getLocale,
+  setLocale,
+  t,
+  useTranslation,
+  type Locale,
+  type MessageKey,
+} from './i18n';
 import {
   advancePet,
   applyAction,
@@ -58,10 +68,15 @@ interface StartupError {
 }
 
 const NEED_KEYS: NeedKey[] = ['fullness', 'energy', 'happiness'];
-const NEED_LABELS: Record<NeedKey, string> = {
-  fullness: 'fullness',
-  energy: 'energy',
-  happiness: 'happiness',
+const NEED_LABEL_KEYS: Record<NeedKey, MessageKey> = {
+  fullness: 'need.fullness',
+  energy: 'need.energy',
+  happiness: 'need.happiness',
+};
+const SUGGESTION_KEYS: Record<NeedKey, MessageKey> = {
+  fullness: 'reminder.suggestion.fullness',
+  energy: 'reminder.suggestion.energy',
+  happiness: 'reminder.suggestion.happiness',
 };
 const REMINDER_STORAGE_KEY = 'digital-pet.reminders.v1';
 
@@ -124,29 +139,20 @@ function clearAppLocalStorage(): void {
 }
 
 function listNeeds(needs: NeedKey[]): string {
-  const labels = needs.map((need) => NEED_LABELS[need]);
-  if (labels.length === 1) {
-    return labels[0] ?? '';
-  }
-  const last = labels[labels.length - 1] ?? '';
-  return `${labels.slice(0, -1).join(', ')} and ${last}`;
+  return formatList(needs.map((need) => t(NEED_LABEL_KEYS[need])));
 }
 
 function reminderText(name: string, needs: NeedKey[]): string {
   const labels = listNeeds(needs);
-  const suggestions: string[] = [];
-  if (needs.includes('fullness')) {
-    suggestions.push('A snack would help.');
-  }
-  if (needs.includes('energy')) {
-    suggestions.push('A nap would help.');
-  }
-  if (needs.includes('happiness')) {
-    suggestions.push('Some playtime would help.');
-  }
-  return `${name} could use some care: ${labels} ${
-    needs.length === 1 ? 'is' : 'are'
-  } low. ${suggestions.join(' ')}`;
+  const suggestions = needs
+    .map((need) => t(SUGGESTION_KEYS[need]))
+    .join(getLocale() === 'ja' ? '' : ' ');
+  return t('reminder.text', {
+    name,
+    needs: labels,
+    suggestions,
+    verb: needs.length === 1 ? 'is' : 'are',
+  });
 }
 
 function recommendedAction(needs: NeedKey[], pet: Pet): ActionType {
@@ -165,15 +171,13 @@ function describeStorageError(error: unknown): string {
     error instanceof DOMException &&
     error.name === 'QuotaExceededError'
   ) {
-    return 'Storage is full. Your latest progress may not be saved.';
+    return t('app.storage.quota');
   }
-  if (error instanceof Error && error.message) {
-    return `Progress may not be saved: ${error.message}`;
-  }
-  return 'Progress may not be saved. Your browser storage may be unavailable.';
+  return t('app.storage.unavailable');
 }
 
 export default function App() {
+  const { locale, t } = useTranslation();
   const [screen, setScreen] = useState<Screen>('loading');
   const [pet, setPet] = useState<Pet | null>(null);
   const [preferences, setPreferences] =
@@ -351,7 +355,9 @@ export default function App() {
         shown = true;
       } else {
         try {
-          const notification = new Notification(`${current.name} needs you`, {
+          const notification = new Notification(
+            t('reminder.title', { name: current.name }),
+            {
             body: text,
             icon: new URL('icons/icon-192.png', document.baseURI).href,
             tag: 'digital-pet-reminder',
@@ -414,6 +420,7 @@ export default function App() {
 
         preferencesRef.current = loadedPreferences;
         setPreferences(loadedPreferences);
+        setLocale(loadedPreferences.locale);
 
         if (petResult.status === 'empty') {
           setScreen('adoption');
@@ -422,9 +429,9 @@ export default function App() {
 
         if (petResult.status === 'corrupt') {
           setStartupError({
-            title: 'Saved data could not be read',
+            title: t('app.startup.corrupt.title'),
             message:
-              'The saved pet data looks damaged. You can reset it and adopt a new pet.',
+              t('app.startup.corrupt.message'),
             canReset: true,
           });
           setScreen('error');
@@ -441,7 +448,7 @@ export default function App() {
 
         if (deriveMood(advanced) === 'critical') {
           showToast(
-            `${advanced.name} is glad you're here. A little care will help.`,
+            t('app.critical', { name: advanced.name }),
             'info',
           );
         }
@@ -470,7 +477,7 @@ export default function App() {
               }
               setAnimationPackError(true);
               setStorageWarning(
-                'The custom animation could not be loaded. Using the built-in animation.',
+                t('app.storage.customAnimation'),
               );
             }
           } catch {
@@ -478,7 +485,7 @@ export default function App() {
               return;
             }
             setStorageWarning(
-              'The custom animation could not be loaded. Using the built-in animation.',
+              t('app.storage.customAnimation'),
             );
           }
         })();
@@ -487,7 +494,7 @@ export default function App() {
           return;
         }
         setStartupError({
-          title: 'Storage unavailable',
+          title: t('app.startup.storage.title'),
           message: describeStorageError(error),
           canReset: false,
         });
@@ -596,13 +603,13 @@ export default function App() {
 
   useEffect(() => {
     if (screen === 'game' && pet) {
-      document.title = `${pet.name} · Digital Pet`;
+      document.title = t('app.title.pet', { name: pet.name });
     } else if (screen === 'adoption') {
-      document.title = 'Adopt a pet · Digital Pet';
+      document.title = t('app.title.adopt');
     } else {
-      document.title = 'Digital Pet';
+      document.title = t('app.title.default');
     }
-  }, [pet, screen]);
+  }, [locale, pet, screen, t]);
 
   useEffect(() => {
     remindersRef.current = loadReminderTimes();
@@ -637,7 +644,7 @@ export default function App() {
 
       updatePet(result.pet);
       setHighlightAction(null);
-      showToast(result.message, result.kind);
+      showToast(t(result.messageKey, result.messageParams), result.kind);
 
       if (result.changed) {
         switch (action) {
@@ -676,7 +683,7 @@ export default function App() {
     async (name: string, species: Species) => {
       const validationError = validateName(name);
       if (validationError) {
-        throw new Error(validationError);
+        throw new Error(t(validationError, { max: NAME_MAX_LENGTH }));
       }
 
       const newPet = createPet(name, species, Date.now());
@@ -684,7 +691,7 @@ export default function App() {
         await repository.savePet(newPet);
       } catch {
         throw new Error(
-          'Your pet could not be saved. Your browser storage may be unavailable or full. Please try again.',
+          t('adoption.error'),
         );
       }
 
@@ -704,7 +711,7 @@ export default function App() {
       lastSaveAttemptRef.current = Date.now();
       setToast({
         id: nextToastId(),
-        text: `Welcome, ${newPet.name}!`,
+        text: t('app.welcome', { name: newPet.name }),
         kind: 'success',
       });
     },
@@ -715,6 +722,18 @@ export default function App() {
     (next: Preferences) => {
       preferencesRef.current = next;
       setPreferences(next);
+      setLocale(next.locale);
+      void enqueuePreferencesSave(next);
+    },
+    [enqueuePreferencesSave],
+  );
+
+  const handleLocaleChange = useCallback(
+    (nextLocale: Locale) => {
+      const next = { ...preferencesRef.current, locale: nextLocale };
+      preferencesRef.current = next;
+      setPreferences(next);
+      setLocale(nextLocale);
       void enqueuePreferencesSave(next);
     },
     [enqueuePreferencesSave],
@@ -724,7 +743,7 @@ export default function App() {
     async (pack: ParsedAnimationPack, rendered: RenderedAnimationPack) => {
       const current = petRef.current;
       if (!current) {
-        throw new Error('No pet is active.');
+        throw new Error(t('app.error.petLoad'));
       }
 
       const stored: StoredAnimationPack = {
@@ -737,7 +756,7 @@ export default function App() {
         await repository.saveAnimationPack(current.id, stored);
       } catch {
         throw new Error(
-          'The animation pack could not be saved. Your browser storage may be full or unavailable.',
+          t('animation.error.save'),
         );
       }
 
@@ -745,7 +764,7 @@ export default function App() {
       setRenderedAnimationPack(rendered);
       renderedPackRef.current = rendered;
       setAnimationPackError(false);
-      showToast('Custom animation applied.', 'success');
+      showToast(t('app.customAnimation.applied'), 'success');
     },
     [showToast],
   );
@@ -759,14 +778,14 @@ export default function App() {
     try {
       await repository.deleteAnimationPack(current.id);
     } catch {
-      throw new Error('The custom animation could not be removed.');
+      throw new Error(t('animation.error.remove'));
     }
 
     setStoredAnimationPack(null);
     setRenderedAnimationPack(null);
     renderedPackRef.current = null;
     setAnimationPackError(false);
-    showToast('Custom animation removed.', 'info');
+    showToast(t('app.customAnimation.removed'), 'info');
   }, [showToast]);
 
   const handleReset = useCallback(async () => {
@@ -802,7 +821,7 @@ export default function App() {
       setScreen('adoption');
       setToast({
         id: nextToastId(),
-        text: 'Your pet has been reset. You can adopt a new friend.',
+        text: t('app.resetPet'),
         kind: 'info',
       });
     } catch (error) {
@@ -836,6 +855,7 @@ export default function App() {
       setAnimationPackError(false);
       preferencesRef.current = DEFAULT_PREFERENCES;
       setPreferences(DEFAULT_PREFERENCES);
+      setLocale(DEFAULT_PREFERENCES.locale);
       setStartupError(null);
       setStorageWarning(null);
       setSettingsOpen(false);
@@ -845,7 +865,7 @@ export default function App() {
       setScreen('adoption');
       setToast({
         id: nextToastId(),
-        text: 'All local data has been deleted.',
+        text: t('app.deleteAll'),
         kind: 'info',
       });
     } finally {
@@ -884,7 +904,7 @@ export default function App() {
             type="button"
             className="message-dismiss"
             onClick={() => setStorageWarning(null)}
-            aria-label="Dismiss storage warning"
+            aria-label={t('common.dismiss')}
           >
             ✕
           </button>
@@ -902,7 +922,7 @@ export default function App() {
             type="button"
             className="message-dismiss"
             onClick={() => setToast(null)}
-            aria-label="Dismiss message"
+            aria-label={t('common.dismiss')}
           >
             ✕
           </button>
@@ -916,7 +936,7 @@ export default function App() {
       <main className={shellClass}>
         <div className="loading-screen" role="status" aria-live="polite">
           <div className="loading-dot" aria-hidden="true" />
-          <p>Waking up your pet…</p>
+          <p>{t('app.loading')}</p>
         </div>
       </main>
     );
@@ -930,17 +950,17 @@ export default function App() {
           <p>{startupError.message}</p>
           <div className="error-actions">
             <button type="button" className="primary-button" onClick={handleRetry}>
-              Try again
+              {t('app.retry')}
             </button>
             {startupError.canReset && (
               <button type="button" className="danger-button" onClick={handleReset}>
-                Reset saved data
+                {t('app.resetSavedData')}
               </button>
             )}
           </div>
           {startupError.canReset && (
             <p className="error-hint">
-              Resetting deletes the saved pet and all progress from this device.
+              {t('app.resetSavedData.hint')}
             </p>
           )}
         </div>
@@ -962,10 +982,10 @@ export default function App() {
     return (
       <main className={shellClass}>
         <div className="error-screen">
-          <h1>Something went wrong</h1>
-          <p>Your pet could not be loaded.</p>
+          <h1>{t('app.error.title')}</h1>
+          <p>{t('app.error.petLoad')}</p>
           <button type="button" className="primary-button" onClick={handleRetry}>
-            Try again
+            {t('app.retry')}
           </button>
         </div>
       </main>
@@ -998,6 +1018,7 @@ export default function App() {
         customAnimationError={animationPackError}
         onClose={() => setSettingsOpen(false)}
         onSave={handleSavePreferences}
+        onLocaleChange={handleLocaleChange}
         onReset={handleReset}
         onDeleteDatabase={handleDeleteDatabase}
         onManageAnimation={() => {

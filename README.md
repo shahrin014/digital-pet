@@ -8,6 +8,7 @@ seconds.
 ## Features
 
 - Adopt one of three built-in pets: fox, cat, or bunny.
+- Japanese-first interface with an English language option in Settings.
 - Feed, play, sleep/wake, and walk with immediate feedback.
 - Needs (fullness, energy, and happiness) decay from timestamps, with safe
   catch-up after time away.
@@ -29,6 +30,11 @@ seconds.
   analytics.
 - Keyboard and screen-reader friendly, with reduced-motion support and
   44 CSS pixel touch targets.
+
+## Language
+
+Japanese is the default language. Open **Settings → Language** to switch to
+English. The choice is saved locally and restored on the next launch.
 
 ## Local-first and offline
 
