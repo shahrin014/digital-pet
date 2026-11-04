@@ -82,6 +82,11 @@ allow GitHub Actions as the Pages source. This is a one-time repository setting.
 If Pages is not enabled, the workflow still builds the app and skips the deploy
 step with a warning instead of failing.
 
+If the deploy job reports `Branch "nightly" is not allowed to deploy to
+github-pages due to environment protection rules`, open **Settings →
+Environments → github-pages → Deployment branches and tags** and allow the
+`nightly` branch (or remove the restriction).
+
 See [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml)
 for the build and deploy steps.
 
