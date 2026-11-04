@@ -15,6 +15,8 @@ export interface PetArtProps {
   species: Species;
   activity: Activity;
   animation?: AnimationState;
+  /** Repeat transient animations in a preview. */
+  loop?: boolean;
   /** Optional accessible description. Defaults to a description of name, species, activity and animation. */
   label?: string;
   className?: string;
@@ -140,6 +142,7 @@ export function PetArt({
   species,
   activity,
   animation,
+  loop = false,
   label,
   className,
 }: PetArtProps) {
@@ -158,6 +161,7 @@ export function PetArt({
     `pet-art--${species}`,
     `pet-art--${activity}`,
     `pet-art--anim-${resolvedAnimation}`,
+    loop ? 'pet-art--loop' : null,
     className,
   ]
     .filter(Boolean)

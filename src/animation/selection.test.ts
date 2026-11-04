@@ -86,6 +86,27 @@ describe('parseAnimationSelection', () => {
     ]);
   });
 
+  it('converts a shared image only once', async () => {
+    const shared = file('shared.png');
+    const input = selection();
+    for (const state of ANIMATION_STATES) {
+      input.frames[state] = [shared];
+    }
+
+    let calls = 0;
+    const convert: FrameConverter = async (source) => {
+      calls += 1;
+      return new TextEncoder().encode(source.name);
+    };
+
+    const parsed = await parseAnimationSelection(input, convert);
+
+    expect(calls).toBe(1);
+    for (const state of ANIMATION_STATES) {
+      expect(parsed.frames[state]).toHaveLength(1);
+    }
+  });
+
   it('trims the animation name', async () => {
     const parsed = await parseAnimationSelection(
       selection({ name: '  Mochi  ' }),

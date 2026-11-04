@@ -73,13 +73,18 @@ export async function parseAnimationSelection(
   }
 
   const converted = {} as Record<AnimationState, Uint8Array[]>;
+  const conversionCache = new Map<File, Uint8Array>();
   let totalBytes = 0;
 
   for (const state of ANIMATION_STATES) {
     converted[state] = [];
     for (const file of sortedFrames[state]) {
       try {
-        const bytes = await convert(file);
+        let bytes = conversionCache.get(file);
+        if (!bytes) {
+          bytes = await convert(file);
+          conversionCache.set(file, bytes);
+        }
         totalBytes += bytes.byteLength;
         if (totalBytes > MAX_CONVERTED_BYTES) {
           throw new AnimationPackError(

@@ -115,7 +115,7 @@ None required for core gameplay. Static HTTPS hosting is required for installati
 
 These are ideas under consideration, not committed behavior. They need a proposal and delta specs before implementation.
 
-- **Custom pets.** Uploading a pet image or building a pet from parts, including animation, moderation, storage limits, and whether custom pets are cosmetic or affect stats. A draft proposal lives in `openspec/changes/add-custom-pets/`.
+- **Custom pets.** A quick one-image upload fills all activities; per-activity frames can override it. Custom pets are cosmetic and stored locally.
 - **Multiple pets.** Letting a player keep more than one pet and switch between them.
 - **Progression.** Bond levels, experience, unlockables, or evolution.
 - **Food and inventory.** Specific food types, a pantry, or a currency.

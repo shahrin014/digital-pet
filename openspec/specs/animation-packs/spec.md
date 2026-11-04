@@ -36,6 +36,67 @@ The app SHALL provide six multi-select image inputs, one for each activity: `idl
 - **THEN** the app reports that `play` accepts at most 24 frames
 - **AND** no animation is applied
 
+### Requirement: Quick custom pet upload
+
+The app SHALL allow the player to select one image and use it as a single frame for all six activities. The image SHALL be traced and stored like any other frame, and per-activity frames MAY be overridden afterward.
+
+#### Scenario: One image fills all activities
+
+- **GIVEN** the player selects one image in the quick custom pet upload
+- **WHEN** the selection is prepared
+- **THEN** each activity uses that image as its single frame
+
+#### Scenario: Quick upload preview
+
+- **GIVEN** the quick custom pet image is selected
+- **WHEN** the player requests a preview
+- **THEN** all six activities are previewed using the image
+
+#### Scenario: Override one activity
+
+- **GIVEN** a quick custom pet image is selected
+- **WHEN** the player selects different frames for `play`
+- **THEN** `play` uses the new frames
+- **AND** the other activities keep the quick upload image
+
+### Requirement: Current animation preview
+
+The app SHALL show a preview of the currently active animation in the pet appearance flow before the upload controls. The preview SHALL cover all six states, SHALL use the active custom frames when present or the built-in species animation otherwise, and SHALL let the player switch states and replay the preview.
+
+#### Scenario: Preview the built-in animation
+
+- **GIVEN** the pet uses the built-in species animation
+- **WHEN** the player opens the animation preview
+- **THEN** the preview shows the built-in animation for the selected state
+- **AND** all six states are available
+
+#### Scenario: Preview the active custom animation
+
+- **GIVEN** a custom animation is active
+- **WHEN** the player opens the animation preview
+- **THEN** the preview shows the stored custom frames for the selected state
+- **AND** all six states are available
+
+#### Scenario: Switch preview states
+
+- **GIVEN** the current animation preview is open
+- **WHEN** the player selects `sleep`
+- **THEN** the preview plays the sleep state
+- **AND** the selected state is indicated
+
+#### Scenario: Preview from settings
+
+- **GIVEN** the pet appearance settings are open
+- **WHEN** the player chooses **Preview animation**
+- **THEN** the animation dialog opens
+- **AND** the current animation preview is visible before the upload controls
+
+#### Scenario: Reduced-motion preview
+
+- **GIVEN** reduced motion is active
+- **WHEN** the player previews the current animation
+- **THEN** the preview shows a static frame
+
 ### Requirement: Accepted images
 
 The app SHALL accept SVG, PNG, JPEG, and WebP images. The app SHALL reject other file formats with an error naming the rejected file.

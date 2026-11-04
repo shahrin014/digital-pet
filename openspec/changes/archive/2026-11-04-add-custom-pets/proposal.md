@@ -1,12 +1,17 @@
 # Proposal: Custom Pets
 
-**Status:** Draft — decisions pending. This change intentionally has no delta specs yet.
+**Status:** Implemented — archived for history.
 
-## Intent
+## Why
 
-Let players personalize their pet beyond the built-in species, so the pet feels more personally theirs. The initial idea is that a player can upload an image (or build a pet from parts) and use it as their pet's appearance.
+Players want to personalize their pet beyond the built-in species so the pet feels more personally theirs.
 
-This is a high-level idea, not an agreed feature. The questions below must be answered before writing delta specs or implementation tasks.
+## What Changes
+
+- Add a quick one-image upload that fills all six activities.
+- Allow per-activity frame overrides through the animation dialog.
+- Trace raster images to SVG and store them locally like other animation frames.
+- Keep custom pets cosmetic and local-only.
 
 ## Current State
 
@@ -26,7 +31,7 @@ Out of scope until separately proposed:
 - Sharing pets with other players.
 - A marketplace or monetized cosmetics.
 - Cloud storage, accounts, or cross-device sync.
-- Custom animations beyond what the chosen approach supports.
+- Rigged or skeletal animation, sharing, and cloud sync.
 
 ## Open Questions
 
@@ -52,12 +57,18 @@ Out of scope until separately proposed:
 - `pwa-platform` — storage limits, persistence, and privacy.
 - Potentially a new `pet-assets` capability for upload, validation, cropping, and storage.
 
-## Next Steps
+## Outcome
 
-1. Resolve questions 1–5, which determine the shape of the feature.
-2. Write delta specs for the affected capabilities.
-3. Add a design covering image validation, downscaling, storage, and quota handling.
-4. Add implementation tasks and tests.
+The custom pet upload was implemented as a quick one-image upload that fills
+all six activities, with optional per-activity frame overrides in the animation
+dialog. Custom pets are cosmetic, local-only, and use the same image tracing and
+IndexedDB storage as other animation frames.
+
+## Implementation
+
+The feature is implemented through the animation dialog and documented in the
+`animation-packs` baseline spec. The quick upload uses one image for all six
+activities; per-activity frames can override it.
 
 ## Related Work
 

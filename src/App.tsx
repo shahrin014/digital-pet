@@ -1033,6 +1033,9 @@ export default function App() {
         customPackName={storedAnimationPack?.manifest.name ?? null}
         customPackError={animationPackError}
         reducedMotion={reducedMotion}
+        petName={pet.name}
+        species={pet.species}
+        currentRenderedPack={renderedAnimationPack}
         onClose={() => setAnimationDialogOpen(false)}
         onApply={handleApplyAnimationPack}
         onRemove={handleRemoveAnimationPack}

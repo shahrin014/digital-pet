@@ -329,6 +329,12 @@ p {
   align-self: flex-start;
 }
 
+.settings-inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 /* ---------- Loading and errors ---------- */
 
 .loading-screen {
@@ -814,6 +820,12 @@ fieldset {
 
 .pet-art--anim-walk .pet-art__creature {
   animation: pet-walk 600ms steps(6, end) infinite;
+}
+
+.pet-art--loop.pet-art--anim-feed .pet-art__creature,
+.pet-art--loop.pet-art--anim-play .pet-art__creature,
+.pet-art--loop.pet-art--anim-wake .pet-art__creature {
+  animation-iteration-count: infinite;
 }
 
 .pet-art__zzz-text {
@@ -1378,6 +1390,63 @@ fieldset {
 }
 
 /* ---------- Animation pack dialog ---------- */
+
+.current-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.current-preview__stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 190px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: radial-gradient(
+    circle at 50% 42%,
+    rgb(255 255 255 / 82%),
+    transparent 62%
+  );
+}
+
+.current-preview__canvas {
+  width: clamp(160px, 42vw, 210px);
+  height: auto;
+}
+
+.current-preview__states {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.current-preview__state {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface-strong);
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.current-preview__state--active {
+  border-color: var(--teal-strong);
+  background: var(--teal-soft);
+  color: var(--teal-strong);
+  box-shadow: inset 0 0 0 1px var(--teal-strong);
+}
+
+.current-preview > .secondary-button {
+  align-self: center;
+}
 
 .animation-dialog {
   width: min(640px, calc(100vw - 24px));

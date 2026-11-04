@@ -4,6 +4,17 @@ Digital Pet can replace the built-in pet animation with your own frames. There
 is no ZIP or manifest file: open **Settings → Pet appearance → Upload animation
 frames**, then select images for each activity.
 
+## Quick custom pet
+
+Choose one image in **Quick custom pet** to use it as a single frame for all six
+activities. You can then override individual activities in the frames section.
+
+## Preview the current animation
+
+Before uploading anything, **Preview animation** shows the currently active
+animation. Switch between the six states and replay the preview. This works for
+both built-in and custom animations.
+
 ## Activities
 
 Choose 1–24 images for each of:

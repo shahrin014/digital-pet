@@ -460,15 +460,24 @@ export function SettingsDialog({
                 {t('settings.appearance.error')}
               </p>
             )}
-            <button
-              type="button"
-              className="secondary-button"
-              onClick={onManageAnimation}
-            >
-              {customAnimationName
-                ? t('settings.appearance.manage')
-                : t('settings.appearance.upload')}
-            </button>
+            <div className="settings-inline-actions">
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={onManageAnimation}
+              >
+                {t('settings.appearance.preview')}
+              </button>
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={onManageAnimation}
+              >
+                {customAnimationName
+                  ? t('settings.appearance.manage')
+                  : t('settings.appearance.upload')}
+              </button>
+            </div>
           </section>
 
           <section className="settings-section" aria-labelledby={`${idPrefix}-data`}>

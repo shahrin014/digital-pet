@@ -20,6 +20,8 @@ import type {
   RenderedAnimationPack,
 } from '../animation/types';
 import { ANIMATION_STATES } from '../animation/types';
+import type { Activity, Species } from '../game/types';
+import { PetArt } from './PetArt';
 import { useTranslation } from '../i18n';
 import { ANIMATION_STATE_KEYS } from '../i18n/keys';
 import { CustomPetRenderer } from './CustomPetRenderer';
@@ -35,6 +37,9 @@ export interface AnimationPackDialogProps {
     rendered: RenderedAnimationPack,
   ) => Promise<void>;
   onRemove: () => Promise<void>;
+  petName: string;
+  species: Species;
+  currentRenderedPack: RenderedAnimationPack | null;
 }
 
 function emptyFiles(): Record<AnimationState, File[]> {
@@ -55,6 +60,16 @@ function defaultFps(): Record<AnimationState, number> {
 const ACCEPT_IMAGES =
   '.svg,.png,.jpg,.jpeg,.webp,image/svg+xml,image/png,image/jpeg,image/webp';
 
+function activityForAnimationState(state: AnimationState): Activity {
+  if (state === 'sleep') {
+    return 'sleeping';
+  }
+  if (state === 'walk') {
+    return 'walking';
+  }
+  return 'awake';
+}
+
 export function AnimationPackDialog({
   open,
   customPackName,
@@ -63,6 +78,9 @@ export function AnimationPackDialog({
   onClose,
   onApply,
   onRemove,
+  petName,
+  species,
+  currentRenderedPack,
 }: AnimationPackDialogProps) {
   const { t } = useTranslation();
   const idPrefix = useId();
@@ -81,6 +99,9 @@ export function AnimationPackDialog({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState(false);
+  const [quickFileName, setQuickFileName] = useState<string | null>(null);
+  const [previewState, setPreviewState] = useState<AnimationState>('idle');
+  const [replayKey, setReplayKey] = useState(0);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -122,6 +143,9 @@ export function AnimationPackDialog({
     setError(null);
     setBusy(false);
     setConfirmRemove(false);
+    setQuickFileName(null);
+    setPreviewState('idle');
+    setReplayKey(0);
   }, [open]);
 
   function invalidatePreview() {
@@ -151,6 +175,30 @@ export function AnimationPackDialog({
     const files = Array.from(event.target.files ?? []);
     event.target.value = '';
     setFilesByState((current) => ({ ...current, [state]: files }));
+    invalidatePreview();
+  }
+
+  function handleQuickUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) {
+      return;
+    }
+
+    setQuickFileName(file.name);
+    setFilesByState({
+      idle: [file],
+      feed: [file],
+      play: [file],
+      sleep: [file],
+      wake: [file],
+      walk: [file],
+    });
+    setName((current) =>
+      current === t('animation.defaultName')
+        ? t('animation.quick.defaultName')
+        : current,
+    );
     invalidatePreview();
   }
 
@@ -311,6 +359,95 @@ export function AnimationPackDialog({
             )}
           </section>
         )}
+
+        <section
+          className="animation-dialog__section"
+          aria-labelledby={`${idPrefix}-current-preview`}
+        >
+          <h3 id={`${idPrefix}-current-preview`}>
+            {t('animation.currentPreview')}
+          </h3>
+          <div className="current-preview">
+            <div className="current-preview__stage">
+              {currentRenderedPack ? (
+                <CustomPetRenderer
+                  key={`${previewState}-${replayKey}`}
+                  frames={currentRenderedPack.frames[previewState]}
+                  manifest={currentRenderedPack.manifest}
+                  animation={previewState}
+                  reducedMotion={reducedMotion}
+                  label={t('animation.previewAria', {
+                    state: t(ANIMATION_STATE_KEYS[previewState]),
+                  })}
+                  className="current-preview__canvas"
+                  loopOverride
+                />
+              ) : (
+                <PetArt
+                  key={`${previewState}-${replayKey}`}
+                  name={petName}
+                  species={species}
+                  activity={activityForAnimationState(previewState)}
+                  animation={previewState}
+                  loop
+                />
+              )}
+            </div>
+            <div
+              className="current-preview__states"
+              role="group"
+              aria-label={t('animation.choosePreview')}
+            >
+              {ANIMATION_STATES.map((state) => (
+                <button
+                  key={state}
+                  type="button"
+                  className={`current-preview__state${
+                    previewState === state
+                      ? ' current-preview__state--active'
+                      : ''
+                  }`}
+                  aria-pressed={previewState === state}
+                  onClick={() => {
+                    setPreviewState(state);
+                    setReplayKey((key) => key + 1);
+                  }}
+                >
+                  {t(ANIMATION_STATE_KEYS[state])}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => setReplayKey((key) => key + 1)}
+            >
+              {t('animation.replay')}
+            </button>
+          </div>
+        </section>
+
+        <section
+          className="animation-dialog__section"
+          aria-labelledby={`${idPrefix}-quick`}
+        >
+          <h3 id={`${idPrefix}-quick`}>{t('animation.quick.title')}</h3>
+          <p className="animation-dialog__meta">{t('animation.quick.hint')}</p>
+          <label className="file-field">
+            <span className="file-field__label">
+              {t('animation.quick.label')}
+            </span>
+            <input
+              type="file"
+              accept={ACCEPT_IMAGES}
+              onChange={handleQuickUpload}
+              disabled={busy}
+            />
+          </label>
+          {quickFileName && (
+            <p className="animation-dialog__filename">{quickFileName}</p>
+          )}
+        </section>
 
         <section
           className="animation-dialog__section"
