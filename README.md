@@ -15,8 +15,9 @@ seconds.
 - Optional in-app reminders, browser notifications, and quiet hours.
 - Built-in activity animations for idle, feeding, playing, sleeping, waking, and walking.
 - Motion preference: follow the device, always animate, or always reduce motion.
-- Custom `.petpack` animations: one static SVG per frame, with upload, validation,
-  preview, apply, replace, and remove. See
+- Custom animations: select 1–24 images per activity. PNG, JPEG, WebP, and SVG
+  are accepted; raster images are normalized to 512×512 SVG frames in the
+  browser before being saved locally. See
   [`docs/animation-packs.md`](docs/animation-packs.md).
 - Separate **Reset pet** and **Delete local database** actions: reset starts a
   new pet while keeping preferences; deleting the database removes the pet,
@@ -44,14 +45,17 @@ reminders still work whenever the app is open.
 
 ## Custom animations
 
-Open **Settings → Pet appearance → Upload animation pack**. A `.petpack` is a
-ZIP file containing a `manifest.json` and one static SVG per frame. The app
-validates the pack, previews all six animations, and stores it locally in
-IndexedDB.
+Open **Settings → Pet appearance → Upload animation pack**. Choose 1–24 images
+for each activity—`idle`, `feed`, `play`, `sleep`, `wake`, and `walk`.
 
-See [`docs/animation-packs.md`](docs/animation-packs.md) for the layout, manifest
-schema, limits, and safety rules. A sample pack is available at
-`public/samples/example.petpack` and from the animation dialog.
+PNG, JPEG, WebP, and SVG are accepted. Each image is normalized to a 512×512
+frame with contain scaling, bottom-center alignment, and a transparent
+background, then traced into SVG paths with a client-side vectorizer and stored
+locally in IndexedDB. Frames are sorted by filename, so name them in playback
+order. FPS is editable per activity.
+
+See [`docs/animation-packs.md`](docs/animation-packs.md) for the full format,
+limits, and safety rules.
 
 ## Requirements
 
@@ -70,7 +74,6 @@ schema, limits, and safety rules. A sample pack is available at
 | `npm run build` | Typecheck and produce a production build in `dist/`. |
 | `npm run preview` | Preview the production build locally. |
 | `npm run icons` | Regenerate the PWA icons and favicon with the pure-Node script. |
-| `npm run sample-pack` | Regenerate the sample `.petpack` in `public/samples/`. |
 
 ## Specs
 

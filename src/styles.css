@@ -1501,6 +1501,99 @@ fieldset {
   cursor: pointer;
 }
 
+.frame-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.frame-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-strong);
+}
+
+.frame-row__heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 8px;
+}
+
+.frame-row__name {
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.frame-row__count {
+  color: var(--ink-soft);
+  font-size: 0.75rem;
+}
+
+.frame-row__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.frame-row__controls input[type='file'] {
+  flex: 1 1 220px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 7px;
+  border: 2px solid var(--border-strong);
+  border-radius: 12px;
+  background: var(--surface-strong);
+  color: var(--ink);
+  font-size: 0.8rem;
+}
+
+.frame-row__controls input[type='file']::file-selector-button {
+  min-height: 32px;
+  margin-right: 8px;
+  padding: 5px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--cream-deep);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.frame-row__fps {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-soft);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.frame-row__fps input {
+  width: 4.5rem;
+  min-height: 40px;
+  padding: 6px 8px;
+  border: 2px solid var(--border-strong);
+  border-radius: 10px;
+  background: var(--surface-strong);
+  color: var(--ink);
+  font-size: 0.9rem;
+}
+
+.frame-row__files {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.7rem;
+  overflow-wrap: anywhere;
+}
+
 .animation-preview-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

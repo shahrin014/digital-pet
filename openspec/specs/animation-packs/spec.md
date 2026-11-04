@@ -1,291 +1,252 @@
-# animation-packs Specification
+# Animation Packs Specification
 
 ## Purpose
-Defines the `.petpack` container, manifest, SVG frame-set layout, validation limits, upload and preview flow, local storage, fallback, and accessibility for player-supplied pet animations.
+
+Defines how players select images for each activity, how the app converts them into SVG frames, and how those frames are validated, previewed, stored, restored, and removed.
 
 ## Requirements
 
-### Requirement: Pack container
+### Requirement: Frame selection
 
-A custom animation pack SHALL be a ZIP archive with the `.petpack` extension containing exactly one `manifest.json` and one `frames/` directory. The `frames/` directory SHALL contain exactly the `idle`, `feed`, `play`, `sleep`, `wake`, and `walk` subdirectories. The app SHALL reject archives that cannot be read as ZIP files, contain extra files or directories, are larger than 5 MB compressed, or are larger than 20 MB uncompressed.
+The app SHALL provide six multi-select image inputs, one for each activity: `idle`, `feed`, `play`, `sleep`, `wake`, and `walk`. Each activity SHALL accept between 1 and 24 files. Selected files SHALL be ordered by filename using natural numeric sorting before frame indices are assigned.
 
-#### Scenario: Valid pack container
+#### Scenario: Valid selection
 
-- **GIVEN** a `.petpack` with `manifest.json` and the six frame directories
-- **WHEN** the player selects the file
-- **THEN** the app accepts it for manifest and frame validation
+- **GIVEN** the player selects three images for `idle`
+- **WHEN** the selection is prepared
+- **THEN** the idle frames are accepted in filename order
 
-#### Scenario: Missing frame directory
+#### Scenario: Natural filename ordering
 
-- **GIVEN** a `.petpack` without a `walk` directory
-- **WHEN** the pack is validated
-- **THEN** the app rejects it with an error naming `walk`
-- **AND** no appearance changes
+- **GIVEN** the idle selection contains `10.png`, `2.png`, and `1.png`
+- **WHEN** the selection is prepared
+- **THEN** the frame order is `1.png`, `2.png`, `10.png`
 
-#### Scenario: Extra files
+#### Scenario: Empty activity
 
-- **GIVEN** a `.petpack` containing a README in addition to the required files
-- **WHEN** the pack is validated
-- **THEN** the app rejects it with an error explaining the allowed files
-
-#### Scenario: Oversized pack
-
-- **GIVEN** a `.petpack` larger than 5 MB compressed
-- **WHEN** the player selects the file
-- **THEN** the app rejects it with a size-limit error
-
-### Requirement: Manifest fields
-
-The manifest SHALL be valid JSON with `formatVersion` equal to `1`, a `name` of 1–32 characters, an optional `description` of at most 120 characters, `frameWidth` and `frameHeight` integers from 32 to 512, and an `animations` object containing exactly `idle`, `feed`, `play`, `sleep`, `wake`, and `walk`.
-
-#### Scenario: Valid manifest
-
-- **GIVEN** a manifest with every required field and all six animation states
-- **WHEN** the pack is validated
-- **THEN** the manifest is accepted
-
-#### Scenario: Missing animation state
-
-- **GIVEN** a manifest that does not define `walk`
-- **WHEN** the pack is validated
-- **THEN** the app rejects it with an error naming `walk`
-- **AND** no appearance changes
-
-#### Scenario: Invalid frame size
-
-- **GIVEN** a manifest with `frameWidth` of 16
-- **WHEN** the pack is validated
-- **THEN** the app rejects it with a frame-size error
-
-#### Scenario: Malformed JSON
-
-- **GIVEN** a manifest that is not valid JSON
-- **WHEN** the pack is validated
-- **THEN** the app reports a manifest parse error
-- **AND** no appearance changes
-
-### Requirement: Frame and FPS limits
-
-Each animation SHALL declare `frames` from 1 to 24 and MAY declare `fps` as an integer from 4 to 30. When `fps` is omitted, the app SHALL use the animation's default: `idle` 8, `feed` 12, `play` 12, `sleep` 4, `wake` 10, and `walk` 10.
-
-#### Scenario: Default FPS applied
-
-- **GIVEN** a manifest where every animation declares `frames` and omits `fps`
-- **WHEN** the pack is validated
-- **THEN** the default FPS values are applied
-- **AND** the pack is accepted
+- **GIVEN** the player has not selected any images for `walk`
+- **WHEN** the player requests a preview
+- **THEN** the app reports that `walk` needs at least one frame
+- **AND** no animation is applied
 
 #### Scenario: Too many frames
 
-- **GIVEN** a manifest where `play` declares 25 frames
-- **WHEN** the pack is validated
-- **THEN** the app rejects it with a frame-limit error
+- **GIVEN** the player selects 25 images for `play`
+- **WHEN** the player requests a preview
+- **THEN** the app reports that `play` accepts at most 24 frames
+- **AND** no animation is applied
 
-#### Scenario: FPS out of range
+### Requirement: Accepted images
 
-- **GIVEN** a manifest where `play` declares 2 FPS
-- **WHEN** the pack is validated
-- **THEN** the app rejects it with an FPS-limit error
+The app SHALL accept SVG, PNG, JPEG, and WebP images. The app SHALL reject other file formats with an error naming the rejected file.
 
-### Requirement: Frame file set
+#### Scenario: Raster image accepted
 
-Each animation directory SHALL contain exactly the number of frames declared in the manifest, named `0.svg` through `{frames - 1}.svg`. The app SHALL reject missing, extra, non-SVG, or incorrectly numbered frame files.
+- **GIVEN** the player selects a PNG, JPEG, or WebP image
+- **WHEN** the selection is prepared
+- **THEN** the image is accepted for conversion
 
-#### Scenario: Valid frame set
+#### Scenario: SVG accepted
 
-- **GIVEN** `idle` declares 4 frames
-- **WHEN** `frames/idle/` contains `0.svg`, `1.svg`, `2.svg`, and `3.svg`
-- **THEN** the frame set is accepted
+- **GIVEN** the player selects a safe SVG image
+- **WHEN** the selection is prepared
+- **THEN** the image is accepted for conversion
 
-#### Scenario: Missing frame
+#### Scenario: Unsupported format
 
-- **GIVEN** `idle` declares 4 frames and `frames/idle/3.svg` is missing
-- **WHEN** the pack is validated
-- **THEN** the app rejects it with a missing-frame error naming `idle` and `3.svg`
+- **GIVEN** the player selects a GIF or an unknown file type
+- **WHEN** the selection is prepared
+- **THEN** the app rejects it with an unsupported-format error
 
-#### Scenario: Extra frame
+### Requirement: Frame normalization
 
-- **GIVEN** `idle` declares 4 frames and `frames/idle/4.svg` exists
-- **WHEN** the pack is validated
-- **THEN** the app rejects it with an extra-frame error
+The app SHALL normalize every selected image to a 512 × 512 frame with contain scaling, bottom-center alignment, and a transparent background.
 
-#### Scenario: Invalid frame filename
+#### Scenario: Raster image is normalized
 
-- **GIVEN** `frames/idle/` contains `walk-0.svg` instead of `0.svg`
-- **WHEN** the pack is validated
-- **THEN** the app rejects it with a filename error
+- **GIVEN** a 300 × 200 PNG
+- **WHEN** it is converted
+- **THEN** the result is a 512 × 512 frame
+- **AND** the image is contained without distortion
+- **AND** its bottom edge is aligned to the bottom of the frame
 
-#### Scenario: Non-SVG frame
+#### Scenario: Transparency is preserved
 
-- **GIVEN** `frames/idle/0.png` is supplied instead of `0.svg`
-- **WHEN** the pack is validated
-- **THEN** the app rejects it as an unsupported frame format
+- **GIVEN** an image with transparent pixels
+- **WHEN** it is converted
+- **THEN** the unused frame area remains transparent
 
-### Requirement: Frame viewBox and anchor
+### Requirement: SVG frame conversion
 
-Every frame SVG SHALL have a root `viewBox` of `0 0 frameWidth frameHeight` and SHALL place the pet's ground contact at the bottom-center of that viewBox.
+Before saving, the app SHALL trace each normalized raster frame into SVG paths using a client-side vectorizer. The app SHALL NOT embed the raster as an `<image>` element or data URL.
 
-#### Scenario: Consistent frame viewBox
+#### Scenario: Raster frame becomes SVG paths
 
-- **GIVEN** every frame SVG uses the declared `viewBox`
-- **WHEN** the pack is validated
-- **THEN** the frames are accepted
+- **GIVEN** a PNG frame
+- **WHEN** it is prepared for storage
+- **THEN** the app creates an SVG document with vector path elements
+- **AND** the SVG does not contain an embedded raster image
 
-#### Scenario: Mismatched frame viewBox
+#### Scenario: Stored frame is vector SVG
 
-- **GIVEN** one frame SVG uses a different `viewBox` size or origin
-- **WHEN** the pack is validated
-- **THEN** the app rejects it with a viewBox error naming the frame
+- **GIVEN** a converted frame
+- **WHEN** it is stored
+- **THEN** the stored frame contains SVG paths
+- **AND** the original raster image is not stored separately
 
-#### Scenario: Ground anchor is consistent
+### Requirement: Source safety
 
-- **GIVEN** all frames use the declared viewBox and bottom-center anchor
-- **WHEN** the animations play
-- **THEN** the pet's feet remain aligned across frames
+The app SHALL reject SVG sources containing `<script>`, event-handler attributes, `<foreignObject>`, external `href` or `xlink:href` references, CSS animation or `@import`, or SVG animation elements such as `<animate>`, `<animateTransform>`, or `<set>`. Embedded raster data URLs SHALL be allowed.
 
-### Requirement: SVG isolation
+#### Scenario: Unsafe SVG rejected
 
-The app SHALL render each SVG frame as an isolated image, SHALL rasterize it before display, and SHALL NOT execute scripts or load external resources from it.
-
-#### Scenario: Frames are rasterized before display
-
-- **GIVEN** a valid SVG frame set
-- **WHEN** the player previews or applies the pack
-- **THEN** each SVG is decoded as an isolated image
-- **AND** playback uses rasterized frame bitmaps
-
-#### Scenario: SVG script rejected
-
-- **GIVEN** a frame SVG containing a `<script>` element
-- **WHEN** the pack is validated
+- **GIVEN** an SVG source containing a `<script>` element
+- **WHEN** the selection is prepared
 - **THEN** the app rejects it as unsafe
 - **AND** no script is executed
 
-### Requirement: SVG content restrictions
+#### Scenario: External reference rejected
 
-The app SHALL reject any frame SVG containing event-handler attributes, `<foreignObject>`, external `href` or `xlink:href` references, embedded `<image>` elements, CSS animation declarations, or SVG animation elements such as `<animate>`, `<animateTransform>`, or `<set>`.
-
-#### Scenario: SVG external reference rejected
-
-- **GIVEN** a frame SVG that references an external image or URL
-- **WHEN** the pack is validated
+- **GIVEN** an SVG source that references an external URL
+- **WHEN** the selection is prepared
 - **THEN** the app rejects it as unsafe
 - **AND** no network request is made
 
-#### Scenario: SVG animation rejected
+#### Scenario: Embedded image allowed
 
-- **GIVEN** a frame SVG containing `<animate>` or `<set>`
-- **WHEN** the pack is validated
-- **THEN** the app rejects it because frames must be static
+- **GIVEN** an SVG source containing an embedded `data:image/png` reference
+- **WHEN** the selection is prepared
+- **THEN** the source is accepted for conversion
 
-#### Scenario: Safe vector frame accepted
+### Requirement: Animation name and FPS
 
-- **GIVEN** a frame SVG that uses only static vector elements, internal fragment references, and no external resources
-- **WHEN** the pack is validated
-- **THEN** the app accepts it
+The app SHALL require an animation name of 1–32 characters and an integer FPS from 4 to 30 for every activity. Defaults SHALL be `idle` 8, `feed` 12, `play` 12, `sleep` 4, `wake` 10, and `walk` 10.
 
-### Requirement: Upload and preview
+#### Scenario: Default FPS values
 
-The app SHALL provide an **Upload animation pack** action in pet appearance settings. After validation, the app SHALL preview all six animations at their declared timing and display the pack name, frame size, and per-animation frame counts before applying. The player SHALL be able to apply or cancel, and cancelling SHALL leave the current appearance unchanged.
+- **GIVEN** the player has not changed the FPS fields
+- **WHEN** the frames are prepared
+- **THEN** each activity uses its default FPS
 
-#### Scenario: Upload, preview, and apply
+#### Scenario: Custom FPS
 
-- **GIVEN** a valid `.petpack`
-- **WHEN** the player selects it and confirms apply
-- **THEN** the preview shows all six animations
-- **AND** the pack becomes the active pet's animation set
-- **AND** every activity uses the custom animation
+- **GIVEN** the player sets `play` to 20 FPS
+- **WHEN** the frames are prepared
+- **THEN** the preview uses 20 FPS for `play`
 
-#### Scenario: Cancel preview
+#### Scenario: Invalid name
+
+- **GIVEN** the animation name is empty or longer than 32 characters
+- **WHEN** the player requests a preview
+- **THEN** the app reports a name error
+- **AND** no animation is applied
+
+#### Scenario: Invalid FPS
+
+- **GIVEN** an activity is set to 2 FPS
+- **WHEN** the player requests a preview
+- **THEN** the app reports an FPS error
+- **AND** no animation is applied
+
+### Requirement: Preview and apply
+
+The app SHALL validate all six selections, convert the frames, and preview every activity before applying. The player SHALL be able to apply or cancel, and cancelling SHALL leave the current appearance unchanged.
+
+#### Scenario: Preview all activities
+
+- **GIVEN** all six activities have valid frames
+- **WHEN** the player requests a preview
+- **THEN** the app shows all six animations with their frame counts and FPS
+
+#### Scenario: Apply the animation
+
+- **GIVEN** a valid preview
+- **WHEN** the player confirms apply
+- **THEN** the custom animation becomes active for every activity
+
+#### Scenario: Cancel leaves the current appearance
 
 - **GIVEN** the preview is open
 - **WHEN** the player cancels
-- **THEN** the current appearance remains unchanged
-- **AND** no pack data is stored
+- **THEN** the current animation remains unchanged
+- **AND** no new frames are stored
 
-#### Scenario: Replace an existing pack
+#### Scenario: Conversion error leaves the current appearance
 
-- **GIVEN** a custom animation pack is active
-- **WHEN** the player applies a different valid pack
-- **THEN** the new pack replaces the old one
-- **AND** the old pack data is deleted
-
-#### Scenario: Invalid pack leaves current appearance
-
-- **GIVEN** a custom animation pack is active
-- **WHEN** the player selects an invalid pack
-- **THEN** the app lists the validation errors
-- **AND** the current appearance remains unchanged
+- **GIVEN** a custom animation is active
+- **WHEN** a selected image cannot be decoded
+- **THEN** the app lists the error with the source filename
+- **AND** the current animation remains unchanged
 
 ### Requirement: Local storage and offline use
 
-The app SHALL store the active pack locally in IndexedDB and SHALL restore it after reload, app restart, and offline launch. Pack data SHALL NOT be sent to a server. Removing the pack SHALL delete its stored data and return the pet to its built-in species animation.
+The app SHALL store the active SVG frames locally in IndexedDB and restore them after reload, app restart, and offline launch. Removing the animation SHALL delete the stored frames and return to the built-in species animation.
 
-#### Scenario: Pack survives reload and offline use
+#### Scenario: Animation survives reload and offline use
 
-- **GIVEN** a valid pack has been applied
+- **GIVEN** a custom animation has been applied
 - **WHEN** the app is reloaded with the network disabled
-- **THEN** the custom animations are restored
+- **THEN** the custom animation is restored
 - **AND** all activities animate
 
-#### Scenario: Remove the custom pack
+#### Scenario: Remove the custom animation
 
-- **GIVEN** a custom pack is active
+- **GIVEN** a custom animation is active
 - **WHEN** the player chooses remove
-- **THEN** the stored pack is deleted
+- **THEN** the stored frames are deleted
 - **AND** the built-in species animation returns
 
-#### Scenario: Pack is missing or corrupt
+#### Scenario: Stored frames are corrupt
 
-- **GIVEN** a custom pack is recorded as active but one of its frames cannot be decoded
+- **GIVEN** a custom animation is recorded as active but a frame cannot be decoded
 - **WHEN** the main game screen loads
 - **THEN** the built-in animation is used
-- **AND** a non-blocking warning explains that the custom pack could not be loaded
+- **AND** a non-blocking warning explains that the custom animation could not be loaded
 
 #### Scenario: Storage quota is exceeded
 
-- **GIVEN** the device does not have enough space for the pack
-- **WHEN** the player applies it
-- **THEN** the app reports that the pack could not be saved
+- **GIVEN** the device does not have enough space for the frames
+- **WHEN** the player applies the animation
+- **THEN** the app reports that the animation could not be saved
 - **AND** the previous appearance remains active
 
-#### Scenario: Delete local database removes packs
+#### Scenario: Delete local database removes frames
 
-- **GIVEN** a custom pack is stored
+- **GIVEN** a custom animation is stored
 - **WHEN** the player uses **Delete local database**
-- **THEN** the pack is deleted with the rest of the local data
+- **THEN** the frames are deleted with the rest of the local data
 
-### Requirement: Pack safety
+### Requirement: Safety and privacy
 
-The app SHALL render the pack name and description as plain text, SHALL accept only SVG frame files, and SHALL NOT make network requests while validating, previewing, storing, or rendering a pack.
+The app SHALL render the animation name as plain text, SHALL NOT send selected images or converted frames to a server, and SHALL NOT execute source content.
 
-#### Scenario: Markup in pack metadata
+#### Scenario: Markup in the animation name
 
-- **GIVEN** a manifest whose name contains HTML markup
-- **WHEN** the name is displayed in the preview or settings
+- **GIVEN** an animation name containing HTML markup
+- **WHEN** the name is displayed
 - **THEN** the markup is shown literally as text
 - **AND** it is not executed
 
 #### Scenario: No network access
 
-- **GIVEN** a pack is being validated and applied
-- **WHEN** the device is offline
-- **THEN** validation, preview, apply, and rendering still work
+- **GIVEN** the player is offline
+- **WHEN** frames are selected, converted, previewed, and applied
+- **THEN** the entire flow works without a network request
 
-### Requirement: Pack accessibility and reduced motion
+### Requirement: Accessibility and reduced motion
 
-Upload and preview controls SHALL be keyboard operable and SHALL have accessible labels for every animation preview. When reduced motion is requested, previews and gameplay SHALL show the first frame instead of advancing frames.
+The frame inputs, preview, apply, and remove controls SHALL be keyboard operable and SHALL have accessible labels. When reduced motion is active, previews and gameplay SHALL show frame 0 instead of advancing frames.
 
-#### Scenario: Keyboard-only pack preview
+#### Scenario: Keyboard-only frame selection
 
 - **GIVEN** the player uses only the keyboard
-- **WHEN** the preview opens
-- **THEN** every animation preview and the apply/cancel controls are reachable
-- **AND** each preview has an accessible name
+- **WHEN** the animation dialog is open
+- **THEN** every activity's file input, FPS field, preview, and apply control is reachable
+- **AND** each control has an accessible name
 
 #### Scenario: Reduced-motion preview
 
-- **GIVEN** the device has `prefers-reduced-motion: reduce`
-- **WHEN** the player previews a pack
-- **THEN** each animation shows frame 0
-- **AND** applying the pack still works
+- **GIVEN** reduced motion is active
+- **WHEN** the player previews the animation
+- **THEN** each activity shows frame 0
+- **AND** applying the animation still works

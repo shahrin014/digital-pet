@@ -1,127 +1,91 @@
-# Animation Packs
+# Animation Frames
 
-Digital Pet can replace the built-in pet animation with a custom pack. A pack is
-a ZIP archive with the `.petpack` extension containing a manifest and one static
-SVG per frame.
+Digital Pet can replace the built-in pet animation with your own frames. There
+is no ZIP or manifest file: open **Settings → Pet appearance → Upload animation
+pack**, then select images for each activity.
 
-## Pack layout
+## Activities
+
+Choose 1–24 images for each of:
+
+- `idle`
+- `feed`
+- `play`
+- `sleep`
+- `wake`
+- `walk`
+
+Frames are sorted by filename using natural order, so name them in playback
+order:
 
 ```text
-my-pet.petpack
-├── manifest.json
-└── frames/
-    ├── idle/
-    │   ├── 0.svg
-    │   ├── 1.svg
-    │   ├── 2.svg
-    │   └── 3.svg
-    ├── feed/
-    │   ├── 0.svg
-    │   └── ...
-    ├── play/
-    ├── sleep/
-    ├── wake/
-    └── walk/
+0.png
+1.png
+2.png
+10.png
 ```
 
-Rules:
+## Accepted images
 
-- The archive contains exactly `manifest.json` and the six frame directories.
-- Each animation directory contains exactly `0.svg` through
-  `{frames - 1}.svg`.
-- Every frame is a static SVG with `viewBox="0 0 frameWidth frameHeight"`.
-- The pet's ground contact belongs at the bottom-center of the viewBox.
-- No extra files or directories.
+- SVG
+- PNG
+- JPEG
+- WebP
 
-Build the archive with the manifest at the root:
+Each image is normalized to a **512 × 512** frame:
 
-```bash
-cd my-pack
-zip -r ../my-pet.petpack manifest.json frames
-```
+- contain scaling, no distortion
+- bottom-center alignment
+- transparent background
 
-## Manifest
+The browser then traces the normalized raster into SVG paths with
+[`imagetracerjs`](https://github.com/jankovicsandras/imagetracerjs) and saves
+that SVG frame locally. This is an approximate vector conversion, not a
+pixel-perfect trace.
 
-```json
-{
-  "formatVersion": 1,
-  "name": "My Pet",
-  "description": "A hand-drawn fox with a bouncy walk.",
-  "frameWidth": 128,
-  "frameHeight": 128,
-  "animations": {
-    "idle": { "frames": 4, "fps": 8 },
-    "feed": { "frames": 6, "fps": 12 },
-    "play": { "frames": 8, "fps": 12 },
-    "sleep": { "frames": 4, "fps": 4 },
-    "wake": { "frames": 4, "fps": 10 },
-    "walk": { "frames": 6, "fps": 10 }
-  }
-}
-```
+## FPS
 
-| Field | Required | Rule |
-| --- | --- | --- |
-| `formatVersion` | yes | `1` |
-| `name` | yes | 1–32 characters |
-| `description` | no | at most 120 characters |
-| `frameWidth` | yes | integer 32–512 |
-| `frameHeight` | yes | integer 32–512 |
-| `animations` | yes | exactly the six states above |
-| `frames` | yes | integer 1–24 |
-| `fps` | no | integer 4–30; defaults below |
+Each activity has an editable FPS value from 4 to 30. Defaults:
 
-Default FPS: `idle` 8, `feed` 12, `play` 12, `sleep` 4, `wake` 10, `walk` 10.
-
-## Frame rules
-
-- Frames play left to right from `0.svg`.
-- Use the exact same viewBox in every frame, for example
-  `viewBox="0 0 128 128"`.
-- Keep the pet's feet at the bottom-center so frames do not jitter.
-- Use transparent backgrounds.
-- Keep frames static. The app controls timing.
-
-## Safety rules
-
-The app rejects frames containing:
-
-- `<script>` or event-handler attributes
-- `<foreignObject>` or embedded `<image>` elements
-- external `href` or `xlink:href` references
-- CSS animation, `@keyframes`, or `@import`
-- SVG animation elements such as `<animate>`, `<animateTransform>`, or `<set>`
-- `javascript:` URLs
-
-Internal fragment references such as `fill="url(#gradient)"` or
-`href="#shape"` are allowed.
+| Activity | Default FPS |
+| --- | --- |
+| `idle` | 8 |
+| `feed` | 12 |
+| `play` | 12 |
+| `sleep` | 4 |
+| `wake` | 10 |
+| `walk` | 10 |
 
 ## Limits
 
-- Pack size: 5 MB compressed, 20 MB uncompressed
-- Frame size: 32 × 32 to 512 × 512 SVG units
-- Frames per animation: 1–24
-- FPS: 4–30
-- One active custom pack per pet
+- 1–24 frames per activity
+- 4–30 FPS per activity
+- 20 MB maximum per source image
+- 20 MB maximum total converted frames
+- 512 × 512 output frame
 
-## Uploading
+## Safety
 
-1. Open **Settings → Pet appearance**.
-2. Choose **Upload animation pack**.
-3. Select a `.petpack` file.
-4. Review the six animation previews.
-5. Choose **Apply animation pack**.
+SVG sources are checked before conversion. The app rejects scripts, event
+handlers, `foreignObject`, external references, CSS animation/imports, and SVG
+animation elements. Embedded raster data URLs are allowed.
 
-The pack is stored locally in IndexedDB and works offline after it is applied.
-Use **Remove custom animation** in the same dialog to return to the built-in
-species animation.
+Raster images are decoded and re-encoded on a canvas, which strips metadata.
+Nothing is uploaded to a server, and the converted frames are stored in
+IndexedDB on the device.
+
+## Preview and apply
+
+1. Select frames for all six activities.
+2. Set the animation name and FPS values.
+3. Choose **Preview animations**.
+4. Review all six animations.
+5. Choose **Apply animation**.
+
+The animation is stored locally and works offline. Use **Remove custom
+animation** in the same dialog to return to the built-in species animation.
 
 ## Reduced motion
 
-When the device requests reduced motion, the app shows frame 0 of each animation
-and does not advance frames. Uploading and applying a pack still works.
-
-## Sample
-
-The app ships a small sample pack at `/samples/example.petpack`. It is also
-available from the animation dialog.
+When reduced motion is active, the app shows frame 0 and does not advance frames.
+You can override the device setting with **Settings → Motion → Always animate**.

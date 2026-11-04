@@ -7,11 +7,13 @@ import {
   type MouseEvent,
   type SyntheticEvent,
 } from 'react';
-import {
-  AnimationPackError,
-  parsePetPackFile,
-} from '../animation/pack';
+import { AnimationPackError } from '../animation/errors';
 import { renderAnimationPack } from '../animation/render';
+import {
+  DEFAULT_FPS,
+  parseAnimationSelection,
+  sortFrameFiles,
+} from '../animation/selection';
 import type {
   AnimationState,
   ParsedAnimationPack,
@@ -33,6 +35,24 @@ export interface AnimationPackDialogProps {
   onRemove: () => Promise<void>;
 }
 
+function emptyFiles(): Record<AnimationState, File[]> {
+  return {
+    idle: [],
+    feed: [],
+    play: [],
+    sleep: [],
+    wake: [],
+    walk: [],
+  };
+}
+
+function defaultFps(): Record<AnimationState, number> {
+  return { ...DEFAULT_FPS };
+}
+
+const ACCEPT_IMAGES =
+  '.svg,.png,.jpg,.jpeg,.webp,image/svg+xml,image/png,image/jpeg,image/webp';
+
 export function AnimationPackDialog({
   open,
   customPackName,
@@ -47,9 +67,13 @@ export function AnimationPackDialog({
   const descriptionId = `${idPrefix}-description`;
   const dialogRef = useRef<HTMLDialogElement>(null);
 
+  const [name, setName] = useState('Custom animation');
+  const [filesByState, setFilesByState] =
+    useState<Record<AnimationState, File[]>>(emptyFiles);
+  const [fpsByState, setFpsByState] =
+    useState<Record<AnimationState, number>>(defaultFps);
   const [parsed, setParsed] = useState<ParsedAnimationPack | null>(null);
   const [rendered, setRendered] = useState<RenderedAnimationPack | null>(null);
-  const [fileName, setFileName] = useState<string | null>(null);
   const [issues, setIssues] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -86,14 +110,23 @@ export function AnimationPackDialog({
     if (!open) {
       return;
     }
+    setName('Custom animation');
+    setFilesByState(emptyFiles());
+    setFpsByState(defaultFps());
     setParsed(null);
     setRendered(null);
-    setFileName(null);
     setIssues([]);
     setError(null);
     setBusy(false);
     setConfirmRemove(false);
   }, [open]);
+
+  function invalidatePreview() {
+    setParsed(null);
+    setRendered(null);
+    setIssues([]);
+    setError(null);
+  }
 
   function handleBackdropClick(event: MouseEvent<HTMLDialogElement>) {
     if (event.target === dialogRef.current && !busy) {
@@ -108,22 +141,35 @@ export function AnimationPackDialog({
     }
   }
 
-  async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
+  function handleFilesChange(
+    state: AnimationState,
+    event: ChangeEvent<HTMLInputElement>,
+  ) {
+    const files = Array.from(event.target.files ?? []);
     event.target.value = '';
-    if (!file) {
-      return;
-    }
+    setFilesByState((current) => ({ ...current, [state]: files }));
+    invalidatePreview();
+  }
 
+  function handleFpsChange(state: AnimationState, value: string) {
+    const next = Number(value);
+    setFpsByState((current) => ({ ...current, [state]: next }));
+    invalidatePreview();
+  }
+
+  async function handlePreview() {
     setBusy(true);
     setIssues([]);
     setError(null);
     setParsed(null);
     setRendered(null);
-    setFileName(file.name);
 
     try {
-      const nextParsed = await parsePetPackFile(file);
+      const nextParsed = await parseAnimationSelection({
+        name,
+        frames: filesByState,
+        fps: fpsByState,
+      });
       const nextRendered = await renderAnimationPack(nextParsed);
       setParsed(nextParsed);
       setRendered(nextRendered);
@@ -134,7 +180,7 @@ export function AnimationPackDialog({
         setError(
           caught instanceof Error
             ? caught.message
-            : 'The animation pack could not be loaded.',
+            : 'The animation frames could not be prepared.',
         );
       }
     } finally {
@@ -156,7 +202,7 @@ export function AnimationPackDialog({
       setError(
         caught instanceof Error
           ? caught.message
-          : 'The animation pack could not be saved.',
+          : 'The animation could not be saved.',
       );
     } finally {
       setBusy(false);
@@ -194,8 +240,8 @@ export function AnimationPackDialog({
           <div>
             <h2 id={titleId}>Pet animation</h2>
             <p id={descriptionId} className="animation-dialog__lede">
-              Load a <code>.petpack</code> with one SVG per frame, preview all
-              six activities, then apply it to your pet.
+              Select one or more images for each activity. Raster images are
+              traced into SVG paths in the browser before they are saved.
             </p>
           </div>
           <button
@@ -218,8 +264,8 @@ export function AnimationPackDialog({
             <p className="animation-dialog__name">{customPackName}</p>
             {customPackError && (
               <p className="animation-dialog__warning" role="alert">
-                This pack could not be loaded. The built-in animation is being
-                used.
+                This animation could not be loaded. The built-in animation is
+                being used.
               </p>
             )}
             {!confirmRemove ? (
@@ -268,35 +314,92 @@ export function AnimationPackDialog({
 
         <section
           className="animation-dialog__section"
-          aria-labelledby={`${idPrefix}-upload`}
+          aria-labelledby={`${idPrefix}-frames`}
         >
-          <h3 id={`${idPrefix}-upload`}>Upload a pack</h3>
-          <label className="file-field">
-            <span className="file-field__label">Choose a .petpack file</span>
+          <h3 id={`${idPrefix}-frames`}>Frames</h3>
+          <p className="animation-dialog__meta">
+            Select 1–24 images per activity. Frames are sorted by filename, so
+            name them in playback order. PNG, JPEG, WebP, and SVG are accepted.
+          </p>
+
+          <label className="motion-field">
+            <span className="motion-field__label">Animation name</span>
             <input
-              type="file"
-              accept=".petpack,application/zip"
+              className="text-input"
+              type="text"
+              maxLength={32}
+              value={name}
               onChange={(event) => {
-                void handleFileChange(event);
+                setName(event.target.value);
+                invalidatePreview();
               }}
               disabled={busy}
             />
           </label>
-          {fileName && (
-            <p className="animation-dialog__filename" aria-live="polite">
-              {fileName}
-            </p>
-          )}
-          <p className="animation-dialog__sample">
-            New to packs?{' '}
-            <a href="samples/example.petpack" download>
-              Download a sample .petpack
-            </a>
-            .
-          </p>
+
+          <div className="frame-rows">
+            {ANIMATION_STATES.map((state) => {
+              const files = filesByState[state];
+              return (
+                <div className="frame-row" key={state}>
+                  <div className="frame-row__heading">
+                    <span className="frame-row__name">{state}</span>
+                    <span className="frame-row__count">
+                      {files.length} selected
+                    </span>
+                  </div>
+                  <div className="frame-row__controls">
+                    <input
+                      type="file"
+                      multiple
+                      accept={ACCEPT_IMAGES}
+                      aria-label={`${state} frames`}
+                      onChange={(event) => handleFilesChange(state, event)}
+                      disabled={busy}
+                    />
+                    <label className="frame-row__fps">
+                      <span>FPS</span>
+                      <input
+                        type="number"
+                        min={4}
+                        max={30}
+                        value={fpsByState[state]}
+                        aria-label={`${state} FPS`}
+                        onChange={(event) =>
+                          handleFpsChange(state, event.target.value)
+                        }
+                        disabled={busy}
+                      />
+                    </label>
+                  </div>
+                  {files.length > 0 && (
+                    <p className="frame-row__files">
+                      {sortFrameFiles(files)
+                        .map((file) => file.name)
+                        .join(' · ')}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="animation-dialog__actions">
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => {
+                void handlePreview();
+              }}
+              disabled={busy}
+            >
+              {busy ? 'Preparing…' : 'Preview animations'}
+            </button>
+          </div>
+
           {busy && (
             <p className="animation-dialog__status" role="status">
-              Reading and validating the pack…
+              Converting and validating frames…
             </p>
           )}
           {error && (
@@ -306,10 +409,10 @@ export function AnimationPackDialog({
           )}
           {issues.length > 0 && (
             <div className="animation-dialog__issues" role="alert">
-              <p>This pack cannot be used:</p>
+              <p>These frames cannot be used:</p>
               <ul>
-                {issues.map((issue) => (
-                  <li key={issue}>{issue}</li>
+                {issues.map((issue, index) => (
+                  <li key={`${index}-${issue}`}>{issue}</li>
                 ))}
               </ul>
             </div>
@@ -325,13 +428,8 @@ export function AnimationPackDialog({
             <p className="animation-dialog__name">{parsed.manifest.name}</p>
             <p className="animation-dialog__meta">
               {parsed.manifest.frameWidth} × {parsed.manifest.frameHeight} px
-              per frame
+              per converted frame
             </p>
-            {parsed.manifest.description && (
-              <p className="animation-dialog__description">
-                {parsed.manifest.description}
-              </p>
-            )}
             <div className="animation-preview-grid">
               {ANIMATION_STATES.map((state: AnimationState) => {
                 const clip = parsed.manifest.animations[state];
@@ -376,7 +474,7 @@ export function AnimationPackDialog({
             }}
             disabled={busy || !parsed || !rendered}
           >
-            {busy ? 'Working…' : 'Apply animation pack'}
+            {busy ? 'Working…' : 'Apply animation'}
           </button>
         </div>
       </div>

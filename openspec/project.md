@@ -72,9 +72,9 @@ These are starting points, not requirements. The behavior specs do not depend on
 | Activity state | The pet's current mode: `awake`, `sleeping`, or `walking`. |
 | Animation state | The pose track currently shown: `idle`, `feed`, `play`, `sleep`, `wake`, or `walk`. |
 | Transient animation | A `feed`, `play`, or `wake` animation that plays once and returns to the persistent state. |
-| Frame | One pose or SVG image in an animation. |
-| Frame set | A directory of one SVG per frame, grouped by animation state. |
-| Animation pack | A `.petpack` archive containing a manifest and SVG frame set for custom animations. |
+| Frame | One SVG image in an animation. |
+| Frame set | The six activity frame collections for a custom animation. |
+| Animation frames | A locally stored custom animation made from selected images traced to 512×512 SVG frames. |
 
 ### Design Pillars
 
