@@ -329,11 +329,6 @@ p {
   align-self: flex-start;
 }
 
-.settings-inline-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
 
 /* ---------- Loading and errors ---------- */
 
@@ -1391,22 +1386,44 @@ fieldset {
 
 /* ---------- Animation pack dialog ---------- */
 
-.current-preview {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
+.animation-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
 }
 
-.current-preview__stage {
+@media (min-width: 560px) {
+  .animation-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.animation-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-strong);
+  color: var(--ink);
+}
+
+.animation-card--active {
+  border-color: var(--teal-strong);
+  background: var(--teal-soft);
+  color: var(--teal-strong);
+  box-shadow: inset 0 0 0 2px var(--teal-strong);
+}
+
+.animation-card__stage {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
-  min-height: 190px;
-  padding: 10px;
-  border: 1px solid var(--border);
-  border-radius: 18px;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 10px;
   background: radial-gradient(
     circle at 50% 42%,
     rgb(255 255 255 / 82%),
@@ -1414,38 +1431,42 @@ fieldset {
   );
 }
 
-.current-preview__canvas {
-  width: clamp(160px, 42vw, 210px);
-  height: auto;
+.animation-card__stage .pet-art {
+  width: 100%;
+  height: 100%;
 }
 
-.current-preview__states {
+.animation-card__canvas {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.animation-card__footer {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
   justify-content: center;
   gap: 6px;
-}
-
-.current-preview__state {
-  min-height: 44px;
-  padding: 8px 12px;
-  border: 1px solid var(--border-strong);
-  border-radius: 999px;
-  background: var(--surface-strong);
-  color: var(--ink);
-  font-size: 0.78rem;
+  min-height: 1.6rem;
+  font-size: 0.75rem;
   font-weight: 750;
 }
 
-.current-preview__state--active {
-  border-color: var(--teal-strong);
-  background: var(--teal-soft);
-  color: var(--teal-strong);
-  box-shadow: inset 0 0 0 1px var(--teal-strong);
+.animation-tab__badge {
+  min-width: 1.2rem;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: var(--teal-strong);
+  color: #fff;
+  font-size: 0.65rem;
+  text-align: center;
 }
 
-.current-preview > .secondary-button {
-  align-self: center;
+.animation-editor__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
 }
 
 .animation-dialog {

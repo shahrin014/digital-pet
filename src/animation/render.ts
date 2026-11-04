@@ -33,8 +33,18 @@ async function rasterizeSvgFrame(
     if (!context) {
       throw new Error('Canvas rendering is not available.');
     }
+    const sourceWidth = image.naturalWidth || image.width || width;
+    const sourceHeight = image.naturalHeight || image.height || height;
+    const scale = Math.min(width / sourceWidth, height / sourceHeight);
+    const drawWidth = sourceWidth * scale;
+    const drawHeight = sourceHeight * scale;
+    const x = (width - drawWidth) / 2;
+    const y = height - drawHeight;
+
     context.clearRect(0, 0, width, height);
-    context.drawImage(image, 0, 0, width, height);
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = 'high';
+    context.drawImage(image, x, y, drawWidth, drawHeight);
     return canvas;
   } finally {
     URL.revokeObjectURL(url);

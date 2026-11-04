@@ -61,41 +61,39 @@ The app SHALL allow the player to select one image and use it as a single frame 
 
 ### Requirement: Current animation preview
 
-The app SHALL show a preview of the currently active animation in the pet appearance flow before the upload controls. The preview SHALL cover all six states, SHALL use the active custom frames when present or the built-in species animation otherwise, and SHALL let the player switch states and replay the preview.
+The app SHALL show all six currently active animations together in the pet appearance flow before the upload controls. Each state SHALL use the active custom frames when present or the built-in species animation otherwise. Selecting a state card SHALL select that activity for editing.
 
 #### Scenario: Preview the built-in animation
 
 - **GIVEN** the pet uses the built-in species animation
-- **WHEN** the player opens the animation preview
-- **THEN** the preview shows the built-in animation for the selected state
-- **AND** all six states are available
+- **WHEN** the player opens the animation dialog
+- **THEN** the six state cards show the built-in animation for idle, feed, play, sleep, wake, and walk
 
 #### Scenario: Preview the active custom animation
 
 - **GIVEN** a custom animation is active
-- **WHEN** the player opens the animation preview
-- **THEN** the preview shows the stored custom frames for the selected state
-- **AND** all six states are available
+- **WHEN** the player opens the animation dialog
+- **THEN** the six state cards show the stored custom frames for each state
 
-#### Scenario: Switch preview states
+#### Scenario: Select an activity to edit
 
-- **GIVEN** the current animation preview is open
-- **WHEN** the player selects `sleep`
-- **THEN** the preview plays the sleep state
-- **AND** the selected state is indicated
+- **GIVEN** all six current animations are visible
+- **WHEN** the player selects the `sleep` card
+- **THEN** the `sleep` card is indicated as selected
+- **AND** the frame editor targets `sleep`
 
 #### Scenario: Preview from settings
 
 - **GIVEN** the pet appearance settings are open
-- **WHEN** the player chooses **Preview animation**
+- **WHEN** the player chooses **Manage animation**
 - **THEN** the animation dialog opens
-- **AND** the current animation preview is visible before the upload controls
+- **AND** all six current animations are visible before the upload controls
 
 #### Scenario: Reduced-motion preview
 
 - **GIVEN** reduced motion is active
-- **WHEN** the player previews the current animation
-- **THEN** the preview shows a static frame
+- **WHEN** the player previews the current animations
+- **THEN** each preview shows a static frame
 
 ### Requirement: Accepted images
 

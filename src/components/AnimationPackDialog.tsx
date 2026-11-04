@@ -99,9 +99,7 @@ export function AnimationPackDialog({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState(false);
-  const [quickFileName, setQuickFileName] = useState<string | null>(null);
-  const [previewState, setPreviewState] = useState<AnimationState>('idle');
-  const [replayKey, setReplayKey] = useState(0);
+  const [selectedState, setSelectedState] = useState<AnimationState>('idle');
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -143,9 +141,7 @@ export function AnimationPackDialog({
     setError(null);
     setBusy(false);
     setConfirmRemove(false);
-    setQuickFileName(null);
-    setPreviewState('idle');
-    setReplayKey(0);
+    setSelectedState('idle');
   }, [open]);
 
   function invalidatePreview() {
@@ -178,21 +174,18 @@ export function AnimationPackDialog({
     invalidatePreview();
   }
 
-  function handleQuickUpload(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    event.target.value = '';
-    if (!file) {
+  function handleCopyToAll() {
+    const selected = filesByState[selectedState];
+    if (selected.length === 0) {
       return;
     }
-
-    setQuickFileName(file.name);
     setFilesByState({
-      idle: [file],
-      feed: [file],
-      play: [file],
-      sleep: [file],
-      wake: [file],
-      walk: [file],
+      idle: selected,
+      feed: selected,
+      play: selected,
+      sleep: selected,
+      wake: selected,
+      walk: selected,
     });
     setName((current) =>
       current === t('animation.defaultName')
@@ -200,6 +193,13 @@ export function AnimationPackDialog({
         : current,
     );
     invalidatePreview();
+  }
+
+  function handleShowCurrent() {
+    setParsed(null);
+    setRendered(null);
+    setIssues([]);
+    setError(null);
   }
 
   function handleFpsChange(state: AnimationState, value: string) {
@@ -362,101 +362,97 @@ export function AnimationPackDialog({
 
         <section
           className="animation-dialog__section"
-          aria-labelledby={`${idPrefix}-current-preview`}
+          aria-labelledby={`${idPrefix}-preview`}
         >
-          <h3 id={`${idPrefix}-current-preview`}>
-            {t('animation.currentPreview')}
+          <h3 id={`${idPrefix}-preview`}>
+            {parsed && rendered
+              ? t('animation.newPreview')
+              : t('animation.currentPreview')}
           </h3>
-          <div className="current-preview">
-            <div className="current-preview__stage">
-              {currentRenderedPack ? (
-                <CustomPetRenderer
-                  key={`${previewState}-${replayKey}`}
-                  frames={currentRenderedPack.frames[previewState]}
-                  manifest={currentRenderedPack.manifest}
-                  animation={previewState}
-                  reducedMotion={reducedMotion}
-                  label={t('animation.previewAria', {
-                    state: t(ANIMATION_STATE_KEYS[previewState]),
-                  })}
-                  className="current-preview__canvas"
-                  loopOverride
-                />
-              ) : (
-                <PetArt
-                  key={`${previewState}-${replayKey}`}
-                  name={petName}
-                  species={species}
-                  activity={activityForAnimationState(previewState)}
-                  animation={previewState}
-                  loop
-                />
-              )}
-            </div>
-            <div
-              className="current-preview__states"
-              role="group"
-              aria-label={t('animation.choosePreview')}
-            >
-              {ANIMATION_STATES.map((state) => (
-                <button
-                  key={state}
-                  type="button"
-                  className={`current-preview__state${
-                    previewState === state
-                      ? ' current-preview__state--active'
-                      : ''
-                  }`}
-                  aria-pressed={previewState === state}
-                  onClick={() => {
-                    setPreviewState(state);
-                    setReplayKey((key) => key + 1);
-                  }}
-                >
-                  {t(ANIMATION_STATE_KEYS[state])}
-                </button>
-              ))}
-            </div>
-            <button
-              type="button"
-              className="secondary-button"
-              onClick={() => setReplayKey((key) => key + 1)}
-            >
-              {t('animation.replay')}
-            </button>
+          <div
+            className="animation-grid"
+            role="group"
+            aria-label={t('animation.edit.tabs')}
+          >
+            {ANIMATION_STATES.map((state) => (
+              <button
+                key={state}
+                type="button"
+                aria-pressed={selectedState === state}
+                className={`animation-card${
+                  selectedState === state ? ' animation-card--active' : ''
+                }`}
+                onClick={() => setSelectedState(state)}
+              >
+                <span className="animation-card__stage" aria-hidden="true">
+                  {rendered ? (
+                    <CustomPetRenderer
+                      frames={rendered.frames[state]}
+                      manifest={rendered.manifest}
+                      animation={state}
+                      reducedMotion={reducedMotion}
+                      label={t('animation.previewAria', {
+                        state: t(ANIMATION_STATE_KEYS[state]),
+                      })}
+                      className="animation-card__canvas"
+                      loopOverride
+                    />
+                  ) : currentRenderedPack ? (
+                    <CustomPetRenderer
+                      frames={currentRenderedPack.frames[state]}
+                      manifest={currentRenderedPack.manifest}
+                      animation={state}
+                      reducedMotion={reducedMotion}
+                      label={t('animation.previewAria', {
+                        state: t(ANIMATION_STATE_KEYS[state]),
+                      })}
+                      className="animation-card__canvas"
+                      loopOverride
+                    />
+                  ) : (
+                    <PetArt
+                      name={petName}
+                      species={species}
+                      activity={activityForAnimationState(state)}
+                      animation={state}
+                      loop
+                    />
+                  )}
+                </span>
+                <span className="animation-card__footer">
+                  <span>{t(ANIMATION_STATE_KEYS[state])}</span>
+                  {filesByState[state].length > 0 && (
+                    <span className="animation-tab__badge">
+                      {filesByState[state].length}
+                    </span>
+                  )}
+                </span>
+              </button>
+            ))}
           </div>
         </section>
 
         <section
           className="animation-dialog__section"
-          aria-labelledby={`${idPrefix}-quick`}
+          aria-labelledby={`${idPrefix}-editor`}
         >
-          <h3 id={`${idPrefix}-quick`}>{t('animation.quick.title')}</h3>
-          <p className="animation-dialog__meta">{t('animation.quick.hint')}</p>
+          <h3 id={`${idPrefix}-editor`}>{t('animation.edit.title')}</h3>
+          <p className="animation-dialog__meta">{t('animation.edit.hint')}</p>
+
           <label className="file-field">
             <span className="file-field__label">
-              {t('animation.quick.label')}
+              {t('animation.framesAria', {
+                state: t(ANIMATION_STATE_KEYS[selectedState]),
+              })}
             </span>
             <input
               type="file"
+              multiple
               accept={ACCEPT_IMAGES}
-              onChange={handleQuickUpload}
+              onChange={(event) => handleFilesChange(selectedState, event)}
               disabled={busy}
             />
           </label>
-          {quickFileName && (
-            <p className="animation-dialog__filename">{quickFileName}</p>
-          )}
-        </section>
-
-        <section
-          className="animation-dialog__section"
-          aria-labelledby={`${idPrefix}-frames`}
-        >
-          <h3 id={`${idPrefix}-frames`}>{t('animation.frames')}</h3>
-          <p className="animation-dialog__meta">
-            {t('animation.framesHint')}
-          </p>
 
           <label className="motion-field">
             <span className="motion-field__label">{t('animation.name')}</span>
@@ -473,52 +469,44 @@ export function AnimationPackDialog({
             />
           </label>
 
-          <div className="frame-rows">
-            {ANIMATION_STATES.map((state) => {
-              const files = filesByState[state];
-              return (
-                <div className="frame-row" key={state}>
-                  <div className="frame-row__heading">
-                    <span className="frame-row__name">{t(ANIMATION_STATE_KEYS[state])}</span>
-                    <span className="frame-row__count">
-                      {t('animation.selected', { count: files.length })}
-                    </span>
-                  </div>
-                  <div className="frame-row__controls">
-                    <input
-                      type="file"
-                      multiple
-                      accept={ACCEPT_IMAGES}
-                      aria-label={t('animation.framesAria', { state: t(ANIMATION_STATE_KEYS[state]) })}
-                      onChange={(event) => handleFilesChange(state, event)}
-                      disabled={busy}
-                    />
-                    <label className="frame-row__fps">
-                      <span>{t('animation.fps')}</span>
-                      <input
-                        type="number"
-                        min={4}
-                        max={30}
-                        value={fpsByState[state]}
-                        aria-label={t('animation.fpsAria', { state: t(ANIMATION_STATE_KEYS[state]) })}
-                        onChange={(event) =>
-                          handleFpsChange(state, event.target.value)
-                        }
-                        disabled={busy}
-                      />
-                    </label>
-                  </div>
-                  {files.length > 0 && (
-                    <p className="frame-row__files">
-                      {sortFrameFiles(files)
-                        .map((file) => file.name)
-                        .join(' · ')}
-                    </p>
-                  )}
-                </div>
-              );
-            })}
+          <div className="animation-editor__row">
+            <label className="frame-row__fps">
+              <span>{t('animation.fps')}</span>
+              <input
+                type="number"
+                min={4}
+                max={30}
+                value={fpsByState[selectedState]}
+                aria-label={t('animation.fpsAria', {
+                  state: t(ANIMATION_STATE_KEYS[selectedState]),
+                })}
+                onChange={(event) =>
+                  handleFpsChange(selectedState, event.target.value)
+                }
+                disabled={busy}
+              />
+            </label>
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={handleCopyToAll}
+              disabled={busy || filesByState[selectedState].length === 0}
+            >
+              {t('animation.copyToAll')}
+            </button>
           </div>
+
+          {filesByState[selectedState].length > 0 ? (
+            <p className="frame-row__files">
+              {sortFrameFiles(filesByState[selectedState])
+                .map((file) => file.name)
+                .join(' · ')}
+            </p>
+          ) : (
+            <p className="animation-dialog__meta">
+              {t('animation.selected', { count: 0 })}
+            </p>
+          )}
 
           <div className="animation-dialog__actions">
             <button
@@ -531,6 +519,16 @@ export function AnimationPackDialog({
             >
               {busy ? t('animation.preparing') : t('animation.preview')}
             </button>
+            {parsed && rendered && (
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={handleShowCurrent}
+                disabled={busy}
+              >
+                {t('animation.showCurrent')}
+              </button>
+            )}
           </div>
 
           {busy && (
@@ -554,54 +552,6 @@ export function AnimationPackDialog({
             </div>
           )}
         </section>
-
-        {parsed && rendered && (
-          <section
-            className="animation-dialog__section"
-            aria-labelledby={`${idPrefix}-preview`}
-          >
-            <h3 id={`${idPrefix}-preview`}>{t('animation.previewTitle')}</h3>
-            <p className="animation-dialog__name">{parsed.manifest.name}</p>
-            <p className="animation-dialog__meta">
-              {t('animation.frameSize', {
-                width: parsed.manifest.frameWidth,
-                height: parsed.manifest.frameHeight,
-              })}
-            </p>
-            <div className="animation-preview-grid">
-              {ANIMATION_STATES.map((state: AnimationState) => {
-                const clip = parsed.manifest.animations[state];
-                return (
-                  <div className="animation-preview" key={state}>
-                    <div className="animation-preview__stage">
-                      <CustomPetRenderer
-                        frames={rendered.frames[state]}
-                        manifest={rendered.manifest}
-                        animation={state}
-                        reducedMotion={reducedMotion}
-                        label={t('animation.previewAria', { state: t(ANIMATION_STATE_KEYS[state]) })}
-                        className="animation-preview__canvas"
-                        loopOverride
-                      />
-                    </div>
-                    <p className="animation-preview__label">{t(ANIMATION_STATE_KEYS[state])}</p>
-                    <p className="animation-preview__meta">
-                      {t('animation.frameMeta', {
-                        frames: t(
-                          clip.frames === 1
-                            ? 'animation.frameCount.one'
-                            : 'animation.frameCount.other',
-                          { count: clip.frames },
-                        ),
-                        fps: clip.fps,
-                      })}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-        )}
 
         <div className="animation-dialog__actions">
           <button

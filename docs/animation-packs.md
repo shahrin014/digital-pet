@@ -1,19 +1,21 @@
 # Animation Frames
 
 Digital Pet can replace the built-in pet animation with your own frames. There
-is no ZIP or manifest file: open **Settings → Pet appearance → Upload animation
-frames**, then select images for each activity.
+is no ZIP or manifest file: open **Settings → Pet appearance → Manage
+animation**, then select images for each activity.
 
 ## Quick custom pet
 
-Choose one image in **Quick custom pet** to use it as a single frame for all six
-activities. You can then override individual activities in the frames section.
+Select one image for an activity, then choose **Copy to all activities** to use
+it as a single frame for all six activities. You can override individual
+activities afterward.
 
-## Preview the current animation
+## Preview all current animations
 
-Before uploading anything, **Preview animation** shows the currently active
-animation. Switch between the six states and replay the preview. This works for
-both built-in and custom animations.
+Open **Settings → Pet appearance → Manage animation**. The dialog shows the six
+currently active animations together, so you can compare idle, feed, play,
+sleep, wake, and walk at a glance. This works for both built-in and custom
+animations. Select any card to edit that activity.
 
 ## Activities
 
@@ -49,10 +51,10 @@ Each image is normalized to a **512 × 512** frame:
 - bottom-center alignment
 - transparent background
 
-The browser then traces the normalized raster into SVG paths with
-[`imagetracerjs`](https://github.com/jankovicsandras/imagetracerjs) and saves
-that SVG frame locally. This is an approximate vector conversion, not a
-pixel-perfect trace.
+SVG files are used as-is after safety validation. PNG, JPEG, and WebP images are
+normalized and traced into SVG paths with
+[`imagetracerjs`](https://github.com/jankovicsandras/imagetracerjs), then saved
+locally. Tracing is an approximate vector conversion, not a pixel-perfect copy.
 
 ## FPS
 
@@ -89,8 +91,8 @@ IndexedDB on the device.
 
 1. Select frames for all six activities.
 2. Set the animation name and FPS values.
-3. Choose **Preview animations**.
-4. Review all six animations.
+3. Choose **Preview changes**.
+4. Review all six new animations in the grid.
 5. Choose **Apply animation**.
 
 The animation is stored locally and works offline. Use **Remove custom

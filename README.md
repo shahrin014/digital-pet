@@ -52,10 +52,9 @@ reminders still work whenever the app is open.
 
 ## Custom animations
 
-Open **Settings → Pet appearance**. Choose **Preview animation** to see the
-current built-in or custom animation for all six states. Choose **Upload
-animation frames** to replace it, or use **Quick custom pet** to apply one image
-to every activity at once.
+Open **Settings → Pet appearance → Manage animation**. The dialog shows all six
+current animations at once. Select an activity card to edit its frames, upload
+new images, or use **Copy to all activities** to make a custom pet from one image.
 
 PNG, JPEG, WebP, and SVG are accepted. Each image is normalized to a 512×512
 frame with contain scaling, bottom-center alignment, and a transparent

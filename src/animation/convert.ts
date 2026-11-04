@@ -70,10 +70,12 @@ export async function convertImageFileToSvg(file: File): Promise<Uint8Array> {
   }
 
   if (file.name.toLowerCase().endsWith('.svg')) {
-    const issues = validateSvgSource(await file.text(), file.name);
+    const text = await file.text();
+    const issues = validateSvgSource(text, file.name);
     if (issues.length > 0) {
       throw new AnimationPackError(issues);
     }
+    return new TextEncoder().encode(text);
   }
 
   const url = URL.createObjectURL(file);
