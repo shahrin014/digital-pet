@@ -19,7 +19,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     outputs:
-      pages-enabled: ${{ steps.pages_status.outputs.enabled }}
+      pages_enabled: ${{ steps.pages_status.outputs.enabled }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -71,7 +71,7 @@ jobs:
           path: dist
 
   deploy:
-    if: needs.build.outputs.pages-enabled == 'true'
+    if: needs.build.outputs.pages_enabled == 'true'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
