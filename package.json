@@ -1,0 +1,52 @@
+{
+  "name": "digital-pet",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A local-first PWA digital pet game",
+  "license": "ISC",
+  "author": "shahrin014",
+  "homepage": "https://shahrin014.github.io/digital-pet/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shahrin014/digital-pet.git"
+  },
+  "bugs": {
+    "url": "https://github.com/shahrin014/digital-pet/issues"
+  },
+  "keywords": [
+    "pwa",
+    "digital-pet",
+    "game",
+    "react",
+    "vite"
+  ],
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "icons": "node scripts/generate-icons.mjs"
+  },
+  "dependencies": {
+    "idb": "^8.0.4",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.2.1",
+    "fake-indexeddb": "^6.2.7",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5",
+    "vite-plugin-pwa": "^2.0.0",
+    "vitest": "^5.1.0"
+  }
+}
