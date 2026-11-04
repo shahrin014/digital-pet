@@ -13,6 +13,9 @@ seconds.
   catch-up after time away.
 - A five-minute walk that continues while the app is closed or offline.
 - Optional in-app reminders, browser notifications, and quiet hours.
+- Separate **Reset pet** and **Delete local database** actions: reset starts a
+  new pet while keeping preferences; deleting the database removes the pet,
+  progress, preferences, and reminder timestamps.
 - Fully offline after the first successful load. No account, backend, or
   analytics.
 - Keyboard and screen-reader friendly, with reduced-motion support and
@@ -27,7 +30,8 @@ The pet, its needs, activity state, timestamps, and preferences are stored in
 
 Because there is no cloud backup, clearing this site's browser data permanently
 deletes the pet and its progress. Use the in-app reset flow only when you want to
-start over.
+start over. **Settings → Delete local database** removes the IndexedDB database
+itself, including preferences and reminder timestamps.
 
 Browser notifications are best-effort. Without a backend, the browser or device
 may delay or skip reminders, especially while the app is closed. In-app

@@ -92,9 +92,14 @@ function saveReminderTimes(times: Record<NeedKey, number>): void {
   }
 }
 
-function clearReminderTimes(): void {
+function clearAppLocalStorage(): void {
   try {
-    localStorage.removeItem(REMINDER_STORAGE_KEY);
+    for (let index = localStorage.length - 1; index >= 0; index -= 1) {
+      const key = localStorage.key(index);
+      if (key?.startsWith('digital-pet.')) {
+        localStorage.removeItem(key);
+      }
+    }
   } catch {
     // Ignore unavailable storage.
   }
@@ -552,8 +557,8 @@ export default function App() {
     try {
       await saveChainRef.current.catch(() => undefined);
       await preferencesChainRef.current.catch(() => undefined);
-      await repository.clearAll();
-      clearReminderTimes();
+      await repository.deletePet();
+      clearAppLocalStorage();
       lastActionRef.current = {};
       remindersRef.current = emptyReminderTimes();
 
@@ -563,8 +568,6 @@ export default function App() {
 
       petRef.current = null;
       setPet(null);
-      preferencesRef.current = DEFAULT_PREFERENCES;
-      setPreferences(DEFAULT_PREFERENCES);
       setStartupError(null);
       setStorageWarning(null);
       setSettingsOpen(false);
@@ -584,11 +587,80 @@ export default function App() {
     }
   }, [nextToastId]);
 
+  const handleDeleteDatabase = useCallback(async () => {
+    resettingRef.current = true;
+    try {
+      await saveChainRef.current.catch(() => undefined);
+      await preferencesChainRef.current.catch(() => undefined);
+      await repository.deleteDatabase();
+      clearAppLocalStorage();
+      lastActionRef.current = {};
+      remindersRef.current = emptyReminderTimes();
+
+      if (!mountedRef.current) {
+        return;
+      }
+
+      petRef.current = null;
+      setPet(null);
+      preferencesRef.current = DEFAULT_PREFERENCES;
+      setPreferences(DEFAULT_PREFERENCES);
+      setStartupError(null);
+      setStorageWarning(null);
+      setSettingsOpen(false);
+      setHighlightAction(null);
+      setScreen('adoption');
+      setToast({
+        id: nextToastId(),
+        text: 'All local data has been deleted.',
+        kind: 'info',
+      });
+    } finally {
+      resettingRef.current = false;
+    }
+  }, [nextToastId]);
+
   const handleRetry = useCallback(() => {
     setStartupError(null);
     setScreen('loading');
     setReloadKey((key) => key + 1);
   }, []);
+
+  const feedbackBars = (
+    <>
+      {storageWarning && (
+        <div className="storage-warning" role="alert">
+          <span>{storageWarning}</span>
+          <button
+            type="button"
+            className="message-dismiss"
+            onClick={() => setStorageWarning(null)}
+            aria-label="Dismiss storage warning"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
+      {toast && (
+        <div
+          className={`message message--${toast.kind}`}
+          role={toast.kind === 'error' ? 'alert' : 'status'}
+          aria-live={toast.kind === 'error' ? 'assertive' : 'polite'}
+        >
+          <span>{toast.text}</span>
+          <button
+            type="button"
+            className="message-dismiss"
+            onClick={() => setToast(null)}
+            aria-label="Dismiss message"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+    </>
+  );
 
   if (screen === 'loading') {
     return (
@@ -630,19 +702,7 @@ export default function App() {
   if (screen === 'adoption') {
     return (
       <main className="app-shell">
-        {storageWarning && (
-          <div className="storage-warning" role="alert">
-            <span>{storageWarning}</span>
-            <button
-              type="button"
-              className="message-dismiss"
-              onClick={() => setStorageWarning(null)}
-              aria-label="Dismiss storage warning"
-            >
-              ✕
-            </button>
-          </div>
-        )}
+        {feedbackBars}
         <AdoptionScreen onAdopt={handleAdopt} />
       </main>
     );
@@ -664,37 +724,7 @@ export default function App() {
 
   return (
     <main className="app-shell">
-      {storageWarning && (
-        <div className="storage-warning" role="alert">
-          <span>{storageWarning}</span>
-          <button
-            type="button"
-            className="message-dismiss"
-            onClick={() => setStorageWarning(null)}
-            aria-label="Dismiss storage warning"
-          >
-            ✕
-          </button>
-        </div>
-      )}
-
-      {toast && (
-        <div
-          className={`message message--${toast.kind}`}
-          role={toast.kind === 'error' ? 'alert' : 'status'}
-          aria-live={toast.kind === 'error' ? 'assertive' : 'polite'}
-        >
-          <span>{toast.text}</span>
-          <button
-            type="button"
-            className="message-dismiss"
-            onClick={() => setToast(null)}
-            aria-label="Dismiss message"
-          >
-            ✕
-          </button>
-        </div>
-      )}
+      {feedbackBars}
 
       <PetScreen
         pet={pet}
@@ -709,6 +739,7 @@ export default function App() {
         onClose={() => setSettingsOpen(false)}
         onSave={handleSavePreferences}
         onReset={handleReset}
+        onDeleteDatabase={handleDeleteDatabase}
       />
     </main>
   );

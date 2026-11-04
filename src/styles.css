@@ -1256,6 +1256,11 @@ fieldset {
   background: #fff5f2;
 }
 
+.danger-zone--database {
+  border-color: #d89486;
+  background: #ffefec;
+}
+
 .danger-zone h3,
 .danger-zone__warning strong {
   color: var(--danger-ink);

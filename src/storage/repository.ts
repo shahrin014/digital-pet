@@ -27,6 +27,7 @@ export interface Repository {
   loadPreferences(): Promise<Preferences>;
   savePreferences(preferences: Preferences): Promise<void>;
   clearAll(): Promise<void>;
+  deleteDatabase(): Promise<void>;
   close(): Promise<void>;
 }
 
@@ -120,6 +121,14 @@ export function createRepository(dbName = 'digital-pet'): Repository {
     return dbPromise;
   }
 
+  async function closeDb(): Promise<void> {
+    if (dbPromise) {
+      const db = await dbPromise.catch(() => null);
+      db?.close();
+      dbPromise = null;
+    }
+  }
+
   return {
     async loadPet() {
       const db = await getDb();
@@ -167,13 +176,31 @@ export function createRepository(dbName = 'digital-pet'): Repository {
       await db.clear(STORE_NAME);
     },
 
-    async close() {
-      if (dbPromise) {
-        const db = await dbPromise;
-        db.close();
-        dbPromise = null;
-      }
+    async deleteDatabase() {
+      await closeDb();
+      await new Promise<void>((resolve, reject) => {
+        const timer = setTimeout(() => {
+          reject(
+            new Error(
+              'The local database is still in use in another tab. Close other Digital Pet tabs and try again.',
+            ),
+          );
+        }, 5000);
+
+        deleteDB(dbName).then(
+          () => {
+            clearTimeout(timer);
+            resolve();
+          },
+          (error: unknown) => {
+            clearTimeout(timer);
+            reject(error);
+          },
+        );
+      });
     },
+
+    close: closeDb,
   };
 }
 

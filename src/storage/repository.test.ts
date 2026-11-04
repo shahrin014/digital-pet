@@ -106,6 +106,19 @@ describe('repository', () => {
     await expect(repo.loadPet()).resolves.toEqual({ status: 'empty' });
     await expect(repo.loadPreferences()).resolves.toEqual(DEFAULT_PREFERENCES);
   });
+
+  it('deletes the local database and reopens cleanly', async () => {
+    await repo.savePet(createPet('Mochi', 'fox', 1_700_000_000_000));
+    await repo.savePreferences({
+      ...DEFAULT_PREFERENCES,
+      quietHoursEnabled: false,
+    });
+
+    await repo.deleteDatabase();
+
+    await expect(repo.loadPet()).resolves.toEqual({ status: 'empty' });
+    await expect(repo.loadPreferences()).resolves.toEqual(DEFAULT_PREFERENCES);
+  });
 });
 
 describe('validators', () => {

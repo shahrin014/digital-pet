@@ -15,6 +15,7 @@ export interface SettingsDialogProps {
   onClose: () => void;
   onSave: (preferences: Preferences) => void;
   onReset: () => void | Promise<void>;
+  onDeleteDatabase: () => void | Promise<void>;
 }
 
 const NOTIFICATION_BEST_EFFORT =
@@ -38,6 +39,7 @@ export function SettingsDialog({
   onClose,
   onSave,
   onReset,
+  onDeleteDatabase,
 }: SettingsDialogProps) {
   const idPrefix = useId();
   const titleId = `${idPrefix}-title`;
@@ -60,7 +62,10 @@ export function SettingsDialog({
   const [requestingPermission, setRequestingPermission] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [confirmDeleteDatabase, setConfirmDeleteDatabase] = useState(false);
+  const [deletingDatabase, setDeletingDatabase] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dangerError, setDangerError] = useState<string | null>(null);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -100,7 +105,10 @@ export function SettingsDialog({
     setQuietEnd(preferences.quietEnd);
     setConfirmReset(false);
     setResetting(false);
+    setConfirmDeleteDatabase(false);
+    setDeletingDatabase(false);
     setError(null);
+    setDangerError(null);
     setRequestingPermission(false);
 
     if (!notificationSupported) {
@@ -216,14 +224,31 @@ export function SettingsDialog({
 
   async function handleResetPet() {
     setResetting(true);
-    setError(null);
+    setDangerError(null);
     try {
       await onReset();
       onClose();
     } catch {
-      setError('Your pet could not be reset. Your saved pet is unchanged.');
+      setDangerError(
+        'Your pet could not be reset. Your saved pet is unchanged.',
+      );
     } finally {
       setResetting(false);
+    }
+  }
+
+  async function handleDeleteDatabase() {
+    setDeletingDatabase(true);
+    setDangerError(null);
+    try {
+      await onDeleteDatabase();
+      onClose();
+    } catch {
+      setDangerError(
+        'The local database could not be deleted. Close any other Digital Pet tabs and try again.',
+      );
+    } finally {
+      setDeletingDatabase(false);
     }
   }
 
@@ -368,13 +393,16 @@ export function SettingsDialog({
             {!confirmReset ? (
               <>
                 <p className="settings-note">
-                  Start over with a new pet. Your current pet stays saved until
-                  you confirm.
+                  Start over with a new pet. Your current pet and progress are
+                  deleted, but your notification and quiet-hour settings stay.
                 </p>
                 <button
                   type="button"
                   className="danger-button"
-                  onClick={() => setConfirmReset(true)}
+                  onClick={() => {
+                    setConfirmReset(true);
+                    setDangerError(null);
+                  }}
                 >
                   Reset pet
                 </button>
@@ -392,6 +420,11 @@ export function SettingsDialog({
                   Your pet is stored only on this device, and clearing your
                   browser data will also delete it. This cannot be undone.
                 </p>
+                {dangerError && (
+                  <p className="form-error" role="alert">
+                    {dangerError}
+                  </p>
+                )}
                 <div className="danger-zone__actions">
                   <button
                     type="button"
@@ -406,9 +439,82 @@ export function SettingsDialog({
                   <button
                     type="button"
                     className="secondary-button"
-                    onClick={() => setConfirmReset(false)}
+                    onClick={() => {
+                      setConfirmReset(false);
+                      setDangerError(null);
+                    }}
                   >
                     Keep my pet
+                  </button>
+                </div>
+              </div>
+            )}
+          </section>
+
+          <section
+            className="settings-section danger-zone danger-zone--database"
+            aria-labelledby={`${idPrefix}-delete-database`}
+          >
+            <h3 id={`${idPrefix}-delete-database`}>Delete local database</h3>
+            {!confirmDeleteDatabase ? (
+              <>
+                <p className="settings-note">
+                  Delete the entire local database, including your pet,
+                  progress, notification settings, and quiet hours. This cannot
+                  be undone.
+                </p>
+                <button
+                  type="button"
+                  className="danger-button"
+                  onClick={() => {
+                    setConfirmDeleteDatabase(true);
+                    setDangerError(null);
+                  }}
+                >
+                  Delete local database
+                </button>
+              </>
+            ) : (
+              <div
+                className="danger-confirm"
+                role="group"
+                aria-label="Confirm local database deletion"
+              >
+                <p className="danger-zone__warning">
+                  <strong>
+                    This permanently deletes all Digital Pet data on this
+                    device.
+                  </strong>{' '}
+                  That includes your pet, progress, notification settings, quiet
+                  hours, and reminder timestamps. This cannot be undone.
+                </p>
+                {dangerError && (
+                  <p className="form-error" role="alert">
+                    {dangerError}
+                  </p>
+                )}
+                <div className="danger-zone__actions">
+                  <button
+                    type="button"
+                    className="danger-button"
+                    onClick={() => {
+                      void handleDeleteDatabase();
+                    }}
+                    disabled={deletingDatabase}
+                  >
+                    {deletingDatabase
+                      ? 'Deleting…'
+                      : 'Yes, delete all local data'}
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => {
+                      setConfirmDeleteDatabase(false);
+                      setDangerError(null);
+                    }}
+                  >
+                    Keep my data
                   </button>
                 </div>
               </div>
