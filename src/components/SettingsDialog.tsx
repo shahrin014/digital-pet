@@ -13,6 +13,9 @@ export interface SettingsDialogProps {
   open: boolean;
   preferences: Preferences;
   systemReducedMotion: boolean;
+  canInstall: boolean;
+  isIos: boolean;
+  installed: boolean;
   customAnimationName?: string | null;
   customAnimationError?: boolean;
   onClose: () => void;
@@ -20,6 +23,7 @@ export interface SettingsDialogProps {
   onReset: () => void | Promise<void>;
   onDeleteDatabase: () => void | Promise<void>;
   onManageAnimation: () => void;
+  onInstall: () => void | Promise<void>;
 }
 
 const NOTIFICATION_BEST_EFFORT =
@@ -41,6 +45,9 @@ export function SettingsDialog({
   open,
   preferences,
   systemReducedMotion,
+  canInstall,
+  isIos,
+  installed,
   customAnimationName,
   customAnimationError = false,
   onClose,
@@ -48,6 +55,7 @@ export function SettingsDialog({
   onReset,
   onDeleteDatabase,
   onManageAnimation,
+  onInstall,
 }: SettingsDialogProps) {
   const idPrefix = useId();
   const titleId = `${idPrefix}-title`;
@@ -297,6 +305,40 @@ export function SettingsDialog({
         </header>
 
         <form className="settings-form" onSubmit={handleSubmit} noValidate>
+          <section className="settings-section install-section" aria-labelledby={`${idPrefix}-install`}>
+            <h3 id={`${idPrefix}-install`}>Install app</h3>
+            {installed ? (
+              <p className="settings-note">
+                Digital Pet is installed. Open it from your home screen.
+              </p>
+            ) : canInstall ? (
+              <>
+                <p className="settings-note">
+                  Add Digital Pet to your home screen for full-screen, offline
+                  play.
+                </p>
+                <button
+                  type="button"
+                  className="primary-button"
+                  onClick={() => {
+                    void onInstall();
+                  }}
+                >
+                  Install app
+                </button>
+              </>
+            ) : isIos ? (
+              <p className="settings-note">
+                Tap the Share button in Safari, then choose “Add to Home Screen”.
+              </p>
+            ) : (
+              <p className="settings-note">
+                Use your browser menu to install or add Digital Pet to your home
+                screen.
+              </p>
+            )}
+          </section>
+
           <section className="settings-section" aria-labelledby={`${idPrefix}-notifications`}>
             <h3 id={`${idPrefix}-notifications`}>Notifications</h3>
             <label className="toggle-row">

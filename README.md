@@ -15,6 +15,9 @@ seconds.
 - Optional in-app reminders, browser notifications, and quiet hours.
 - Built-in activity animations for idle, feeding, playing, sleeping, waking, and walking.
 - Motion preference: follow the device, always animate, or always reduce motion.
+- Installable on supported browsers, with a dismissible install banner, browser
+  install prompt, iOS Add to Home Screen guidance, and an Install app section in
+  settings.
 - Custom animations: select 1–24 images per activity. PNG, JPEG, WebP, and SVG
   are accepted; raster images are normalized to 512×512 SVG frames in the
   browser before being saved locally. See
@@ -26,8 +29,6 @@ seconds.
   analytics.
 - Keyboard and screen-reader friendly, with reduced-motion support and
   44 CSS pixel touch targets.
-- Installable on supported browsers via the web app manifest and service
-  worker.
 
 ## Local-first and offline
 

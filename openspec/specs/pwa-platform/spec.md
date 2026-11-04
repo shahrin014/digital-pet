@@ -22,6 +22,50 @@ The app SHALL provide a web app manifest with a name, a short name, a start URL,
 - **WHEN** the installed app icon is displayed with a circular or rounded mask
 - **THEN** the icon content is not clipped or cropped
 
+### Requirement: Install discovery
+
+The app SHALL show a dismissible install banner when the browser offers installation or when the device requires manual add-to-home-screen instructions. The banner SHALL be hidden when the app is running installed or standalone, and SHALL remain dismissed for seven days after the player dismisses it. Settings SHALL always include install guidance.
+
+#### Scenario: Browser install prompt is available
+
+- **GIVEN** the browser fires `beforeinstallprompt`
+- **WHEN** the adoption or main game screen is shown
+- **THEN** a visible install banner appears with an Install button
+- **AND** activating Install opens the browser prompt
+
+#### Scenario: iOS manual install
+
+- **GIVEN** the app is running on iOS Safari outside standalone mode
+- **WHEN** the app is shown
+- **THEN** the install banner explains Share → Add to Home Screen
+- **AND** no browser install prompt is attempted
+
+#### Scenario: App is already installed
+
+- **GIVEN** the app is running in standalone mode
+- **THEN** the install banner is hidden
+- **AND** settings states that the app is installed
+
+#### Scenario: Player dismisses the banner
+
+- **GIVEN** the install banner is visible
+- **WHEN** the player dismisses it
+- **THEN** the banner is hidden
+- **AND** it does not return for seven days
+- **AND** settings still provides install guidance
+
+#### Scenario: Settings install guidance
+
+- **GIVEN** installation is not available through a browser prompt
+- **WHEN** the player opens settings
+- **THEN** an Install app section explains how to add the app to the home screen
+
+#### Scenario: Keyboard access
+
+- **GIVEN** the player uses only the keyboard
+- **WHEN** the install banner is visible
+- **THEN** the Install and dismiss controls are reachable and labelled
+
 ### Requirement: Offline launch and play
 
 After one successful online load, the app SHALL load while offline and SHALL allow the full core loop offline, including viewing the pet and performing feed, play, sleep or wake, and walk.

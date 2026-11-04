@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AdoptionScreen } from './components/AdoptionScreen';
 import { AnimationPackDialog } from './components/AnimationPackDialog';
+import { InstallBanner } from './components/InstallBanner';
 import { PetScreen } from './components/PetScreen';
 import { SettingsDialog } from './components/SettingsDialog';
 import { renderAnimationPack } from './animation/render';
@@ -14,6 +15,11 @@ import {
   type TransientAnimationState,
 } from './animation/types';
 import { usePrefersReducedMotion } from './animation/usePrefersReducedMotion';
+import {
+  dismissInstallBanner,
+  wasInstallBannerDismissed,
+} from './pwa/install';
+import { useInstallPrompt } from './pwa/useInstallPrompt';
 import {
   DEFAULT_PREFERENCES,
   REMINDER_INTERVAL_MS,
@@ -188,6 +194,10 @@ export default function App() {
   const [animationPackError, setAnimationPackError] = useState(false);
   const [animationDialogOpen, setAnimationDialogOpen] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+  const [installDismissed, setInstallDismissed] = useState(() =>
+    wasInstallBannerDismissed(),
+  );
+  const install = useInstallPrompt();
   const systemReducedMotion = usePrefersReducedMotion();
   const reducedMotion =
     preferences.motion === 'full'
@@ -224,6 +234,19 @@ export default function App() {
   const updatePet = useCallback((next: Pet) => {
     petRef.current = next;
     setPet(next);
+  }, []);
+
+  const handleInstall = useCallback(async () => {
+    const outcome = await install.promptInstall();
+    if (outcome !== 'unavailable') {
+      setInstallDismissed(true);
+      dismissInstallBanner();
+    }
+  }, [install.promptInstall]);
+
+  const handleDismissInstall = useCallback(() => {
+    setInstallDismissed(true);
+    dismissInstallBanner();
   }, []);
 
   const clearTransient = useCallback(() => {
@@ -839,6 +862,18 @@ export default function App() {
   const animationState: AnimationState =
     transientAnimation ?? (pet ? persistentAnimationFor(pet.activity) : 'idle');
   const shellClass = `app-shell${reducedMotion ? ' motion-reduced' : ''}`;
+  const showInstallBanner =
+    !install.installed &&
+    !installDismissed &&
+    (install.canPrompt || install.isIos);
+  const installBanner = showInstallBanner ? (
+    <InstallBanner
+      canInstall={install.canPrompt}
+      isIos={install.isIos}
+      onInstall={handleInstall}
+      onDismiss={handleDismissInstall}
+    />
+  ) : null;
 
   const feedbackBars = (
     <>
@@ -916,6 +951,7 @@ export default function App() {
   if (screen === 'adoption') {
     return (
       <main className={shellClass}>
+        {installBanner}
         {feedbackBars}
         <AdoptionScreen onAdopt={handleAdopt} />
       </main>
@@ -938,6 +974,7 @@ export default function App() {
 
   return (
     <main className={shellClass}>
+      {installBanner}
       {feedbackBars}
 
       <PetScreen
@@ -954,6 +991,9 @@ export default function App() {
         open={settingsOpen}
         preferences={preferences}
         systemReducedMotion={systemReducedMotion}
+        canInstall={install.canPrompt}
+        isIos={install.isIos}
+        installed={install.installed}
         customAnimationName={storedAnimationPack?.manifest.name ?? null}
         customAnimationError={animationPackError}
         onClose={() => setSettingsOpen(false)}
@@ -964,6 +1004,7 @@ export default function App() {
           setSettingsOpen(false);
           setAnimationDialogOpen(true);
         }}
+        onInstall={handleInstall}
       />
 
       <AnimationPackDialog
