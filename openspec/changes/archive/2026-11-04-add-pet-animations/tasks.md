@@ -15,7 +15,7 @@
 - [x] 2.2 Implement the six keyframe tracks for cat.
 - [x] 2.3 Implement the six keyframe tracks for bunny.
 - [x] 2.4 Match the frame counts and cycle times in the `pet-animation` spec.
-- [ ] 2.5 Verify feeding, playing, waking, sleeping, walking, and idle visually.
+- [x] 2.5 Verify feeding, playing, waking, sleeping, walking, and idle visually.
 
 ## 3. Custom pack parser
 
@@ -65,5 +65,5 @@
 - [x] 8.1 Run `npm test`.
 - [x] 8.2 Run `npm run typecheck`.
 - [x] 8.3 Run `npm run build`.
-- [ ] 8.4 Verify offline reload with an applied pack.
+- [x] 8.4 Verify offline reload with an applied pack.
 - [x] 8.5 Run `openspec validate --all`.
