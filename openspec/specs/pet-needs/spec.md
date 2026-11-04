@@ -61,8 +61,9 @@ While the pet is sleeping, energy SHALL regenerate at 10 points per hour, fullne
 #### Scenario: Regeneration stops at the maximum
 
 - **GIVEN** the pet is sleeping with energy 95
-- **WHEN** 2 hours pass
+- **WHEN** 30 minutes pass
 - **THEN** energy is 100
+- **AND** the pet wakes automatically
 
 ### Requirement: Catch-up is applied safely
 
