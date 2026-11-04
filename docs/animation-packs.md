@@ -40,18 +40,21 @@ order:
 
 ## Accepted images
 
+The same image picker accepts every supported format. There is no separate
+SVG-only upload control.
+
 - SVG
 - PNG
 - JPEG
 - WebP
 
-Each image is normalized to a **512 × 512** frame:
+Every frame is fitted into a **512 × 512** frame:
 
 - contain scaling, no distortion
 - bottom-center alignment
 - transparent background
 
-SVG files are used as-is after safety validation. PNG, JPEG, and WebP images are
+SVG files are safety-validated and stored as-is. PNG, JPEG, and WebP images are
 normalized and traced into SVG paths with
 [`imagetracerjs`](https://github.com/jankovicsandras/imagetracerjs), then saved
 locally. Tracing is an approximate vector conversion, not a pixel-perfect copy.

@@ -95,9 +95,16 @@ The app SHALL show all six currently active animations together in the pet appea
 - **WHEN** the player previews the current animations
 - **THEN** each preview shows a static frame
 
-### Requirement: Accepted images
+### Requirement: Single image upload
 
-The app SHALL accept SVG, PNG, JPEG, and WebP images. The app SHALL reject other file formats with an error naming the rejected file.
+The app SHALL provide one image upload control per activity. That same control SHALL accept SVG, PNG, JPEG, and WebP. The app SHALL NOT provide a separate SVG-only upload control. The app SHALL reject other file formats with an error naming the rejected file.
+
+#### Scenario: One control accepts every supported format
+
+- **GIVEN** the animation dialog is open
+- **WHEN** the player opens the file picker for an activity
+- **THEN** SVG, PNG, JPEG, and WebP are accepted by that same control
+- **AND** no separate SVG-only upload control is shown
 
 #### Scenario: Raster image accepted
 
@@ -119,7 +126,7 @@ The app SHALL accept SVG, PNG, JPEG, and WebP images. The app SHALL reject other
 
 ### Requirement: Frame normalization
 
-The app SHALL normalize every selected image to a 512 × 512 frame with contain scaling, bottom-center alignment, and a transparent background.
+The app SHALL render every frame into a 512 × 512 canvas with contain scaling, bottom-center alignment, and a transparent background. Raster inputs SHALL be normalized this way before tracing. SVG inputs SHALL use the same fitting when rendered.
 
 #### Scenario: Raster image is normalized
 
@@ -129,15 +136,22 @@ The app SHALL normalize every selected image to a 512 × 512 frame with contain 
 - **AND** the image is contained without distortion
 - **AND** its bottom edge is aligned to the bottom of the frame
 
+#### Scenario: SVG is fitted to the frame
+
+- **GIVEN** a safe SVG with a non-square viewBox
+- **WHEN** it is rendered
+- **THEN** it is contained in a 512 × 512 frame without distortion
+- **AND** its bottom edge is aligned to the bottom of the frame
+
 #### Scenario: Transparency is preserved
 
 - **GIVEN** an image with transparent pixels
 - **WHEN** it is converted
 - **THEN** the unused frame area remains transparent
 
-### Requirement: SVG frame conversion
+### Requirement: Raster-to-SVG tracing
 
-Before saving, the app SHALL trace each normalized raster frame into SVG paths using a client-side vectorizer. The app SHALL NOT embed the raster as an `<image>` element or data URL.
+Before saving a raster input, the app SHALL trace its normalized frame into SVG paths using a client-side vectorizer. The app SHALL NOT embed the raster as an `<image>` element or data URL.
 
 #### Scenario: Raster frame becomes SVG paths
 
@@ -146,12 +160,23 @@ Before saving, the app SHALL trace each normalized raster frame into SVG paths u
 - **THEN** the app creates an SVG document with vector path elements
 - **AND** the SVG does not contain an embedded raster image
 
-#### Scenario: Stored frame is vector SVG
+#### Scenario: Stored raster frame is vector SVG
 
-- **GIVEN** a converted frame
+- **GIVEN** a converted raster frame
 - **WHEN** it is stored
 - **THEN** the stored frame contains SVG paths
 - **AND** the original raster image is not stored separately
+
+### Requirement: Direct SVG storage
+
+A safe SVG input SHALL be stored unchanged. It SHALL NOT be rasterized and re-traced before storage.
+
+#### Scenario: Safe SVG is stored as-is
+
+- **GIVEN** a safe SVG image is selected through the shared upload control
+- **WHEN** it is prepared for storage
+- **THEN** the stored frame keeps the original SVG markup
+- **AND** the app does not trace it into new paths
 
 ### Requirement: Source safety
 
