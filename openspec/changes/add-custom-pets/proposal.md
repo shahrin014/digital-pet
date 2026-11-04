@@ -58,3 +58,9 @@ Out of scope until separately proposed:
 2. Write delta specs for the affected capabilities.
 3. Add a design covering image validation, downscaling, storage, and quota handling.
 4. Add implementation tasks and tests.
+
+## Related Work
+
+- `openspec/changes/add-pet-animations/` defines the animation runtime and the
+  `.petpack` custom animation format. A custom pet appearance can reuse that
+  format once both changes are implemented.

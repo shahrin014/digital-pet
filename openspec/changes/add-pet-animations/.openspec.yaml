@@ -1,0 +1,9 @@
+schema: spec-driven
+created: 2026-11-04
+goal: Define per-activity animation frame counts and a custom animation pack format.
+affected_areas:
+  - pet-animation
+  - animation-packs
+  - pet-ui
+  - pet-care
+  - storage
