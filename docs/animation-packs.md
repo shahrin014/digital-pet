@@ -10,12 +10,16 @@ Select one image for an activity, then choose **Copy to all activities** to use
 it as a single frame for all six activities. You can override individual
 activities afterward.
 
-## Preview all current animations
+## Preview current and uploaded animations
 
-Open **Settings → Pet appearance → Manage animation**. The dialog shows the six
-currently active animations together, so you can compare idle, feed, play,
-sleep, wake, and walk at a glance. This works for both built-in and custom
-animations. Select any card to edit that activity.
+Open **Settings → Pet appearance → Manage animation**. The preview grid shows
+the six currently active animations together, so you can compare idle, feed,
+play, sleep, wake, and walk at a glance. This works for both built-in and custom
+animations.
+
+After selecting new frames, choose **Preview changes**. The same grid switches to
+the uploaded frames. Use the **Current** / **Uploaded** control to compare them,
+then select any card to edit that activity.
 
 ## Activities
 
@@ -95,7 +99,7 @@ IndexedDB on the device.
 1. Select frames for all six activities.
 2. Set the animation name and FPS values.
 3. Choose **Preview changes**.
-4. Review all six new animations in the grid.
+4. Use the **Current** / **Uploaded** control to compare the new frames with the active animation.
 5. Choose **Apply animation**.
 
 The animation is stored locally and works offline. Use **Remove custom

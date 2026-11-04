@@ -55,11 +55,14 @@ reminders still work whenever the app is open.
 Open **Settings → Pet appearance → Manage animation**. The dialog shows all six
 current animations at once. Select an activity card to edit its frames, upload
 new images, or use **Copy to all activities** to make a custom pet from one image.
+Choose **Preview changes** to view the uploaded frames in the same grid, then
+switch between **Current** and **Uploaded** to compare them.
 
-PNG, JPEG, WebP, and SVG are accepted. Each image is normalized to a 512×512
-frame with contain scaling, bottom-center alignment, and a transparent
-background, then traced into SVG paths with a client-side vectorizer and stored
-locally in IndexedDB. Frames are sorted by filename, so name them in playback
+The same file picker accepts PNG, JPEG, WebP, and SVG. SVG files are validated
+and stored as-is. Raster images are normalized to a 512×512 frame with contain
+scaling, bottom-center alignment, and a transparent background, then traced into
+SVG paths with a client-side vectorizer and stored locally in IndexedDB. Frames
+are sorted by filename, so name them in playback
 order. FPS is editable per activity.
 
 See [`docs/animation-packs.md`](docs/animation-packs.md) for the full format,

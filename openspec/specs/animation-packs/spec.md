@@ -59,25 +59,42 @@ The app SHALL allow the player to select one image and use it as a single frame 
 - **THEN** `play` uses the new frames
 - **AND** the other activities keep the quick upload image
 
-### Requirement: Current animation preview
+### Requirement: Current and uploaded animation preview
 
-The app SHALL show all six currently active animations together in the pet appearance flow before the upload controls. Each state SHALL use the active custom frames when present or the built-in species animation otherwise. Selecting a state card SHALL select that activity for editing.
+The app SHALL show a six-card preview grid in the pet appearance flow before the upload controls. The same grid SHALL preview both the currently active animations and the uploaded frames. A two-option control SHALL switch between **Current** and **Uploaded**, with **Current** shown first. The **Uploaded** option SHALL become available after the selection has been prepared. Each state SHALL use the active custom frames when present or the built-in species animation otherwise.
 
 #### Scenario: Preview the built-in animation
 
 - **GIVEN** the pet uses the built-in species animation
 - **WHEN** the player opens the animation dialog
 - **THEN** the six state cards show the built-in animation for idle, feed, play, sleep, wake, and walk
+- **AND** the **Current** option is selected
 
 #### Scenario: Preview the active custom animation
 
 - **GIVEN** a custom animation is active
 - **WHEN** the player opens the animation dialog
 - **THEN** the six state cards show the stored custom frames for each state
+- **AND** the **Current** option is selected
+
+#### Scenario: Uploaded frames use the same grid
+
+- **GIVEN** the player has selected frames for every activity
+- **WHEN** the player chooses **Preview changes**
+- **THEN** the same six-card grid shows the uploaded frames
+- **AND** the **Uploaded** option becomes selected
+- **AND** the **Current** option remains available
+
+#### Scenario: Switch back to the current animation
+
+- **GIVEN** the uploaded preview is visible
+- **WHEN** the player selects the **Current** option
+- **THEN** the grid shows the currently active animations
+- **AND** changing frames again returns the grid to the **Current** option
 
 #### Scenario: Select an activity to edit
 
-- **GIVEN** all six current animations are visible
+- **GIVEN** the preview grid is visible
 - **WHEN** the player selects the `sleep` card
 - **THEN** the `sleep` card is indicated as selected
 - **AND** the frame editor targets `sleep`
@@ -87,12 +104,12 @@ The app SHALL show all six currently active animations together in the pet appea
 - **GIVEN** the pet appearance settings are open
 - **WHEN** the player chooses **Manage animation**
 - **THEN** the animation dialog opens
-- **AND** all six current animations are visible before the upload controls
+- **AND** the preview grid is visible before the upload controls
 
 #### Scenario: Reduced-motion preview
 
 - **GIVEN** reduced motion is active
-- **WHEN** the player previews the current animations
+- **WHEN** the player previews the current or uploaded animations
 - **THEN** each preview shows a static frame
 
 ### Requirement: Single image upload

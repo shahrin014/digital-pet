@@ -100,6 +100,9 @@ export function AnimationPackDialog({
   const [busy, setBusy] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [selectedState, setSelectedState] = useState<AnimationState>('idle');
+  const [previewSource, setPreviewSource] = useState<'current' | 'new'>(
+    'current',
+  );
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -142,6 +145,7 @@ export function AnimationPackDialog({
     setBusy(false);
     setConfirmRemove(false);
     setSelectedState('idle');
+    setPreviewSource('current');
   }, [open]);
 
   function invalidatePreview() {
@@ -149,6 +153,7 @@ export function AnimationPackDialog({
     setRendered(null);
     setIssues([]);
     setError(null);
+    setPreviewSource('current');
   }
 
   function handleBackdropClick(event: MouseEvent<HTMLDialogElement>) {
@@ -195,13 +200,6 @@ export function AnimationPackDialog({
     invalidatePreview();
   }
 
-  function handleShowCurrent() {
-    setParsed(null);
-    setRendered(null);
-    setIssues([]);
-    setError(null);
-  }
-
   function handleFpsChange(state: AnimationState, value: string) {
     const next = Number(value);
     setFpsByState((current) => ({ ...current, [state]: next }));
@@ -224,6 +222,7 @@ export function AnimationPackDialog({
       const nextRendered = await renderAnimationPack(nextParsed);
       setParsed(nextParsed);
       setRendered(nextRendered);
+      setPreviewSource('new');
     } catch (caught) {
       if (caught instanceof AnimationPackError) {
         setIssues(caught.issues);
@@ -276,6 +275,8 @@ export function AnimationPackDialog({
       setBusy(false);
     }
   }
+
+  const showingNew = previewSource === 'new' && rendered !== null;
 
   return (
     <dialog
@@ -364,11 +365,34 @@ export function AnimationPackDialog({
           className="animation-dialog__section"
           aria-labelledby={`${idPrefix}-preview`}
         >
-          <h3 id={`${idPrefix}-preview`}>
-            {parsed && rendered
-              ? t('animation.newPreview')
-              : t('animation.currentPreview')}
-          </h3>
+          <h3 id={`${idPrefix}-preview`}>{t('animation.previewTitle')}</h3>
+          <div
+            className="preview-switch"
+            role="group"
+            aria-label={t('animation.previewMode')}
+          >
+            <button
+              type="button"
+              className={`preview-switch__button${
+                !showingNew ? ' preview-switch__button--active' : ''
+              }`}
+              aria-pressed={!showingNew}
+              onClick={() => setPreviewSource('current')}
+            >
+              {t('animation.previewCurrentTab')}
+            </button>
+            <button
+              type="button"
+              className={`preview-switch__button${
+                showingNew ? ' preview-switch__button--active' : ''
+              }`}
+              aria-pressed={showingNew}
+              onClick={() => setPreviewSource('new')}
+              disabled={!rendered}
+            >
+              {t('animation.previewUploadedTab')}
+            </button>
+          </div>
           <div
             className="animation-grid"
             role="group"
@@ -385,7 +409,7 @@ export function AnimationPackDialog({
                 onClick={() => setSelectedState(state)}
               >
                 <span className="animation-card__stage" aria-hidden="true">
-                  {rendered ? (
+                  {showingNew && rendered ? (
                     <CustomPetRenderer
                       frames={rendered.frames[state]}
                       manifest={rendered.manifest}
@@ -519,16 +543,6 @@ export function AnimationPackDialog({
             >
               {busy ? t('animation.preparing') : t('animation.preview')}
             </button>
-            {parsed && rendered && (
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={handleShowCurrent}
-                disabled={busy}
-              >
-                {t('animation.showCurrent')}
-              </button>
-            )}
           </div>
 
           {busy && (
