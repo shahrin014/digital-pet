@@ -11,7 +11,7 @@ The built-in pets currently change appearance with the awake, sleeping, and walk
 - Play transient animations for feed, play, and wake; loop idle, sleep, and walk.
 - Add a `.petpack` custom animation pack format containing a `manifest.json` and a frame set of one static SVG per frame.
 - Define pack limits, validation rules, upload and preview flow, local storage, fallback, and removal.
-- Respect reduced-motion preferences for built-in and custom animations.
+- Respect reduced-motion preferences for built-in and custom animations, with an in-app motion preference that can follow the device, always animate, or always reduce motion.
 - Add a pack authoring guide and a sample pack.
 
 ## Scope

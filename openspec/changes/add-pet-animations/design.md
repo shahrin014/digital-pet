@@ -79,6 +79,10 @@ One SVG per frame keeps the authoring model obvious and makes validation simple:
 
 SVG files are loaded as isolated images and rasterized to frame-sized bitmaps. This prevents scripts and external resource loads, gives deterministic frame timing, and makes reduced-motion handling trivial.
 
+### Decision: In-app motion preference
+
+The effective reduced-motion state is derived from the player's preference and the operating system: `system` follows the OS, `full` overrides the OS, and `reduced` always disables animation. Built-in CSS uses a `motion-reduced` class on the app shell; the custom renderer receives the same computed flag as a prop. This gives players an explicit escape hatch when their device requests reduced motion but they want to see the game animations.
+
 ### Decision: One pack per pet
 
 The MVP has one active pet. One active pack keeps the UI and storage simple and avoids a pack library without a management screen.

@@ -112,11 +112,36 @@ describe('repository', () => {
       quietHoursEnabled: false,
       quietStart: '21:30',
       quietEnd: '07:15',
+      motion: 'reduced' as const,
     };
 
     await repo.savePreferences(preferences);
 
     await expect(repo.loadPreferences()).resolves.toEqual(preferences);
+  });
+
+  it('defaults motion for legacy preferences', async () => {
+    await repo.loadPreferences();
+    const db = await openDB(dbName, 2);
+    await db.put(
+      'state',
+      {
+        browserNotifications: true,
+        quietHoursEnabled: false,
+        quietStart: '21:30',
+        quietEnd: '07:15',
+      },
+      'preferences',
+    );
+    db.close();
+
+    await expect(repo.loadPreferences()).resolves.toEqual({
+      browserNotifications: true,
+      quietHoursEnabled: false,
+      quietStart: '21:30',
+      quietEnd: '07:15',
+      motion: 'system',
+    });
   });
 
   it('falls back to default preferences when saved data is corrupt', async () => {
@@ -203,6 +228,9 @@ describe('validators', () => {
     expect(isPreferences(DEFAULT_PREFERENCES)).toBe(true);
     expect(
       isPreferences({ ...DEFAULT_PREFERENCES, quietStart: '25:00' }),
+    ).toBe(false);
+    expect(
+      isPreferences({ ...DEFAULT_PREFERENCES, motion: 'sometimes' }),
     ).toBe(false);
     expect(isPreferences({ browserNotifications: 'yes' })).toBe(false);
   });

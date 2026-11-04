@@ -14,6 +14,7 @@ seconds.
 - A five-minute walk that continues while the app is closed or offline.
 - Optional in-app reminders, browser notifications, and quiet hours.
 - Built-in activity animations for idle, feeding, playing, sleeping, waking, and walking.
+- Motion preference: follow the device, always animate, or always reduce motion.
 - Custom `.petpack` animations: one static SVG per frame, with upload, validation,
   preview, apply, replace, and remove. See
   [`docs/animation-packs.md`](docs/animation-packs.md).

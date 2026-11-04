@@ -188,7 +188,13 @@ export default function App() {
   const [animationPackError, setAnimationPackError] = useState(false);
   const [animationDialogOpen, setAnimationDialogOpen] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
-  const reducedMotion = usePrefersReducedMotion();
+  const systemReducedMotion = usePrefersReducedMotion();
+  const reducedMotion =
+    preferences.motion === 'full'
+      ? false
+      : preferences.motion === 'reduced'
+        ? true
+        : systemReducedMotion;
 
   const mountedRef = useRef(true);
   const petRef = useRef<Pet | null>(null);
@@ -832,6 +838,7 @@ export default function App() {
 
   const animationState: AnimationState =
     transientAnimation ?? (pet ? persistentAnimationFor(pet.activity) : 'idle');
+  const shellClass = `app-shell${reducedMotion ? ' motion-reduced' : ''}`;
 
   const feedbackBars = (
     <>
@@ -871,7 +878,7 @@ export default function App() {
 
   if (screen === 'loading') {
     return (
-      <main className="app-shell">
+      <main className={shellClass}>
         <div className="loading-screen" role="status" aria-live="polite">
           <div className="loading-dot" aria-hidden="true" />
           <p>Waking up your pet…</p>
@@ -882,7 +889,7 @@ export default function App() {
 
   if (screen === 'error' && startupError) {
     return (
-      <main className="app-shell">
+      <main className={shellClass}>
         <div className="error-screen">
           <h1>{startupError.title}</h1>
           <p>{startupError.message}</p>
@@ -908,7 +915,7 @@ export default function App() {
 
   if (screen === 'adoption') {
     return (
-      <main className="app-shell">
+      <main className={shellClass}>
         {feedbackBars}
         <AdoptionScreen onAdopt={handleAdopt} />
       </main>
@@ -917,7 +924,7 @@ export default function App() {
 
   if (!pet) {
     return (
-      <main className="app-shell">
+      <main className={shellClass}>
         <div className="error-screen">
           <h1>Something went wrong</h1>
           <p>Your pet could not be loaded.</p>
@@ -930,7 +937,7 @@ export default function App() {
   }
 
   return (
-    <main className="app-shell">
+    <main className={shellClass}>
       {feedbackBars}
 
       <PetScreen
@@ -946,6 +953,7 @@ export default function App() {
       <SettingsDialog
         open={settingsOpen}
         preferences={preferences}
+        systemReducedMotion={systemReducedMotion}
         customAnimationName={storedAnimationPack?.manifest.name ?? null}
         customAnimationError={animationPackError}
         onClose={() => setSettingsOpen(false)}

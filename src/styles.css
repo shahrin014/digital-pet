@@ -1236,6 +1236,17 @@ fieldset {
   gap: 10px;
 }
 
+.motion-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.motion-field__label {
+  font-size: 0.86rem;
+  font-weight: 750;
+}
+
 .time-field {
   display: flex;
   flex-direction: column;
@@ -1710,33 +1721,31 @@ fieldset {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    scroll-behavior: auto !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
+.motion-reduced *,
+.motion-reduced *::before,
+.motion-reduced *::after {
+  scroll-behavior: auto !important;
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
 
-  .pet-art__creature,
-  .pet-art__zzz-text,
-  .loading-dot,
-  .action-button--highlight {
-    animation: none !important;
-  }
+.motion-reduced .pet-art__creature,
+.motion-reduced .pet-art__zzz-text,
+.motion-reduced .loading-dot,
+.motion-reduced .action-button--highlight {
+  animation: none !important;
+}
 
-  /* Keep non-motion feedback visible for highlighted actions. */
-  .action-button--highlight {
-    outline: 3px solid var(--teal-strong);
-    outline-offset: 2px;
-    box-shadow: 0 2px 0 #d4b793;
-  }
+/* Keep non-motion feedback visible for highlighted actions. */
+.motion-reduced .action-button--highlight {
+  outline: 3px solid var(--teal-strong);
+  outline-offset: 2px;
+  box-shadow: 0 2px 0 #d4b793;
+}
 
-  .pet-art__zzz-text {
-    opacity: 0.85;
-  }
+.motion-reduced .pet-art__zzz-text {
+  opacity: 0.85;
 }
 
 /* ---------- Compact phones ---------- */

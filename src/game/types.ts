@@ -8,6 +8,7 @@ export type Mood = 'happy' | 'content' | 'needy' | 'critical';
 export type NeedKey = 'fullness' | 'energy' | 'happiness';
 export type ActionType = 'feed' | 'play' | 'sleep' | 'wake' | 'walk' | 'cancelWalk';
 export type MessageKind = 'info' | 'success' | 'error';
+export type MotionPreference = 'system' | 'full' | 'reduced';
 
 export interface Pet {
   id: string;
@@ -28,6 +29,7 @@ export interface Preferences {
   quietHoursEnabled: boolean;
   quietStart: string;
   quietEnd: string;
+  motion: MotionPreference;
 }
 
 export interface ActionResult {

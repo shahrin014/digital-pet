@@ -7,11 +7,12 @@ import {
   type MouseEvent,
   type SyntheticEvent,
 } from 'react';
-import type { Preferences } from '../game/types';
+import type { MotionPreference, Preferences } from '../game/types';
 
 export interface SettingsDialogProps {
   open: boolean;
   preferences: Preferences;
+  systemReducedMotion: boolean;
   customAnimationName?: string | null;
   customAnimationError?: boolean;
   onClose: () => void;
@@ -39,6 +40,7 @@ function supportsNotifications(): boolean {
 export function SettingsDialog({
   open,
   preferences,
+  systemReducedMotion,
   customAnimationName,
   customAnimationError = false,
   onClose,
@@ -62,6 +64,7 @@ export function SettingsDialog({
   );
   const [quietStart, setQuietStart] = useState(preferences.quietStart);
   const [quietEnd, setQuietEnd] = useState(preferences.quietEnd);
+  const [motion, setMotion] = useState<MotionPreference>(preferences.motion);
   const [notificationMessage, setNotificationMessage] = useState<string | null>(
     null,
   );
@@ -109,6 +112,7 @@ export function SettingsDialog({
     setQuietHoursEnabled(preferences.quietHoursEnabled);
     setQuietStart(preferences.quietStart);
     setQuietEnd(preferences.quietEnd);
+    setMotion(preferences.motion);
     setConfirmReset(false);
     setResetting(false);
     setConfirmDeleteDatabase(false);
@@ -224,6 +228,7 @@ export function SettingsDialog({
       quietHoursEnabled,
       quietStart: quietStart || preferences.quietStart,
       quietEnd: quietEnd || preferences.quietEnd,
+      motion,
     });
     onClose();
   }
@@ -365,6 +370,33 @@ export function SettingsDialog({
                 />
               </label>
             </div>
+          </section>
+
+          <section className="settings-section" aria-labelledby={`${idPrefix}-motion`}>
+            <h3 id={`${idPrefix}-motion`}>Motion</h3>
+            <label className="motion-field">
+              <span className="motion-field__label">Animation preference</span>
+              <select
+                className="text-input"
+                value={motion}
+                onChange={(event) => {
+                  setMotion(event.target.value as MotionPreference);
+                }}
+              >
+                <option value="system">Use device setting</option>
+                <option value="full">Always animate</option>
+                <option value="reduced">Always reduce motion</option>
+              </select>
+            </label>
+            {systemReducedMotion && motion === 'system' && (
+              <p className="settings-status" role="status">
+                Your device is requesting reduced motion, so activity animations
+                are paused. Choose “Always animate” to see them.
+              </p>
+            )}
+            {motion === 'reduced' && (
+              <p className="settings-note">Activity animations are paused.</p>
+            )}
           </section>
 
           <section className="settings-section" aria-labelledby={`${idPrefix}-appearance`}>

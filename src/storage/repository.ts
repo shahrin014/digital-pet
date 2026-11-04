@@ -98,6 +98,36 @@ function isTimeString(value: unknown): value is string {
   );
 }
 
+function isMotionPreference(value: unknown): value is Preferences['motion'] {
+  return value === 'system' || value === 'full' || value === 'reduced';
+}
+
+export function normalizePreferences(value: unknown): Preferences {
+  if (!isRecord(value)) {
+    return { ...DEFAULT_PREFERENCES };
+  }
+
+  return {
+    browserNotifications:
+      typeof value.browserNotifications === 'boolean'
+        ? value.browserNotifications
+        : DEFAULT_PREFERENCES.browserNotifications,
+    quietHoursEnabled:
+      typeof value.quietHoursEnabled === 'boolean'
+        ? value.quietHoursEnabled
+        : DEFAULT_PREFERENCES.quietHoursEnabled,
+    quietStart: isTimeString(value.quietStart)
+      ? value.quietStart
+      : DEFAULT_PREFERENCES.quietStart,
+    quietEnd: isTimeString(value.quietEnd)
+      ? value.quietEnd
+      : DEFAULT_PREFERENCES.quietEnd,
+    motion: isMotionPreference(value.motion)
+      ? value.motion
+      : DEFAULT_PREFERENCES.motion,
+  };
+}
+
 export function isPreferences(value: unknown): value is Preferences {
   if (!isRecord(value)) {
     return false;
@@ -107,7 +137,8 @@ export function isPreferences(value: unknown): value is Preferences {
     typeof value.browserNotifications === 'boolean' &&
     typeof value.quietHoursEnabled === 'boolean' &&
     isTimeString(value.quietStart) &&
-    isTimeString(value.quietEnd)
+    isTimeString(value.quietEnd) &&
+    isMotionPreference(value.motion)
   );
 }
 
@@ -168,14 +199,7 @@ export function createRepository(dbName = 'digital-pet'): Repository {
     async loadPreferences() {
       const db = await getDb();
       const value = await db.get(STORE_NAME, PREFERENCES_KEY);
-
-      if (value === undefined) {
-        return { ...DEFAULT_PREFERENCES };
-      }
-      if (isPreferences(value)) {
-        return { ...value };
-      }
-      return { ...DEFAULT_PREFERENCES };
+      return normalizePreferences(value);
     },
 
     async savePreferences(preferences) {

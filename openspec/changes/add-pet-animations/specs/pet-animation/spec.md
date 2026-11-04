@@ -135,9 +135,38 @@ A successful action SHALL replace any currently playing transient animation imme
 - **THEN** the sleep animation starts immediately
 - **AND** the feed animation does not resume
 
+### Requirement: Motion preference
+
+The app SHALL offer three motion preferences: `system` (the default), `full`, and `reduced`. `system` SHALL follow the operating system setting, `full` SHALL allow animations even when the operating system requests reduced motion, and `reduced` SHALL disable animations regardless of the operating system. The preference SHALL persist.
+
+#### Scenario: Always animate overrides the device setting
+
+- **GIVEN** the device requests reduced motion
+- **WHEN** the player selects **Always animate**
+- **THEN** activity animations play
+
+#### Scenario: Always reduce motion overrides the device setting
+
+- **GIVEN** the device does not request reduced motion
+- **WHEN** the player selects **Always reduce motion**
+- **THEN** activity animations do not play
+- **AND** activity text, badges, and result messages still update
+
+#### Scenario: Default follows the device setting
+
+- **GIVEN** the motion preference is **Use device setting**
+- **WHEN** the device's reduced-motion setting changes
+- **THEN** the app follows the new setting without a reload
+
+#### Scenario: Reduced-motion notice
+
+- **GIVEN** the device requests reduced motion and the preference is **Use device setting**
+- **WHEN** the player opens settings
+- **THEN** a notice explains that activity animations are paused and suggests **Always animate**
+
 ### Requirement: Reduced motion
 
-When the operating system requests reduced motion, the app SHALL render one static representative frame for the current state, SHALL NOT advance frames or loop, and SHALL NOT play transient frame sequences. Activity text, badges, and result messages SHALL still update.
+When the effective motion setting requests reduced motion—the player selected **Always reduce motion**, or selected **Use device setting** and the operating system requests reduced motion—the app SHALL render one static representative frame for the current state, SHALL NOT advance frames or loop, and SHALL NOT play transient frame sequences. Activity text, badges, and result messages SHALL still update.
 
 #### Scenario: Reduced-motion feeding
 

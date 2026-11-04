@@ -7,6 +7,7 @@
 - [x] 1.3 Clear transient animations on activity changes and expiry.
 - [x] 1.4 Add reduced-motion mapping to a single static frame.
 - [x] 1.5 Add unit tests for state derivation, interruption, expiry, and reduced motion.
+- [x] 1.6 Add a persisted motion preference: follow device, always animate, or always reduce.
 
 ## 2. Built-in animations
 
@@ -51,6 +52,7 @@
 - [x] 6.3 Preview all six animations before applying.
 - [x] 6.4 Support apply, cancel, replace, and remove.
 - [x] 6.5 Make the flow keyboard and screen-reader accessible.
+- [x] 6.6 Add the motion preference selector and reduced-motion notice to settings.
 
 ## 7. Documentation and samples
 
