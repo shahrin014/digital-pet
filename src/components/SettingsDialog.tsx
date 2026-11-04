@@ -419,7 +419,7 @@ export function SettingsDialog({
             >
               {customAnimationName
                 ? 'Manage custom animation'
-                : 'Upload animation pack'}
+                : 'Upload animation frames'}
             </button>
           </section>
 

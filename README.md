@@ -45,7 +45,7 @@ reminders still work whenever the app is open.
 
 ## Custom animations
 
-Open **Settings → Pet appearance → Upload animation pack**. Choose 1–24 images
+Open **Settings → Pet appearance → Upload animation frames**. Choose 1–24 images
 for each activity—`idle`, `feed`, `play`, `sleep`, `wake`, and `walk`.
 
 PNG, JPEG, WebP, and SVG are accepted. Each image is normalized to a 512×512

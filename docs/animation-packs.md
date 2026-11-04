@@ -2,7 +2,7 @@
 
 Digital Pet can replace the built-in pet animation with your own frames. There
 is no ZIP or manifest file: open **Settings → Pet appearance → Upload animation
-pack**, then select images for each activity.
+frames**, then select images for each activity.
 
 ## Activities
 
